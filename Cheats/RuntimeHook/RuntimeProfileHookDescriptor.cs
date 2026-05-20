@@ -172,14 +172,18 @@ internal static class ProfileFeatureCatalog
             Key = "FreezeAI", Name = "Freeze AI",
             Signature = "F3 0F ? ? ? ? ? ? F3 0F ? ? F3 0F ? ? 0F 57 ? F3 0F ? ? ? ? ? ? F3 0F ? ? C3",
             MatchOffset = 0, HookSize = 8,
-            ExpectedOriginal = [243, 15, 88, 129, 92, 1, 0, 0],
+            ExpectedOriginal = [243, 15, 88, 129, 84, 1, 0, 0],
             ToggleOffset = 18, ValueOffset = -1,
             Asm =
             [
+                // cmp [toggle], 1
                 128, 61, 14, 0, 0, 0, 1,
+                // jne skip
                 117, 9,
+                // xorps xmm0,xmm0 ; zero velocity
                 15, 87, 192,
-                243, 15, 88, 129, 92, 1, 0, 0,
+                // addss xmm0,[rcx+154h] (original)
+                243, 15, 88, 129, 84, 1, 0, 0,
             ],
         },
 
@@ -212,7 +216,7 @@ internal static class ProfileFeatureCatalog
             Key = "NoClip", Name = "No Clip",
             Signature = "48 8B ? 4C 89 ? ? 56 41 ? 41",
             MatchOffset = 0, HookSize = 7,
-            ExpectedOriginal = [72, 139, 196, 76, 137, 64, 24],
+            ExpectedOriginal = [72, 139, 196, 76, 137, 72, 32],
             ToggleOffset = 18, ValueOffset = -1,
             Asm =
             [
@@ -224,8 +228,8 @@ internal static class ProfileFeatureCatalog
                 195,
                 // nop padding
                 144, 144, 144,
-                // original: mov rax,rsp; mov [rax+18h],r9
-                72, 139, 196, 76, 137, 64, 24,
+                // original: mov rax,rsp; mov [rax+20],r9
+                72, 139, 196, 76, 137, 72, 32,
             ],
         },
 
@@ -236,7 +240,7 @@ internal static class ProfileFeatureCatalog
             Key = "GravityMultiplier", Name = "Gravity Multiplier",
             Signature = "F3 0F ? ? ? F3 0F ? ? ? ? ? ? F3 0F ? ? ? ? ? ? 45 84 ? 74",
             MatchOffset = 0, HookSize = 5,
-            ExpectedOriginal = [243, 15, 89, 115, 8],
+            ExpectedOriginal = [243, 15, 89, 75, 8],
             ToggleOffset = 14, ValueOffset = 15,
             Asm =
             [
@@ -247,7 +251,7 @@ internal static class ProfileFeatureCatalog
                 // mulss xmm1,[value] (custom gravity)
                 243, 15, 89, 13, 2, 0, 0, 0,
                 // mulss xmm1,[rbx+8] (original)
-                243, 15, 89, 115, 8,
+                243, 15, 89, 75, 8,
             ],
         },
 
@@ -305,7 +309,7 @@ internal static class ProfileFeatureCatalog
             Key = "SkillScoreMultiplier", Name = "Skill Score Multiplier",
             Signature = "8B 78 08 48 8B 18 48 3B DF",
             MatchOffset = 0, HookSize = 7,
-            ExpectedOriginal = [139, 120, 8, 72, 139, 24, 72],
+            ExpectedOriginal = [139, 120, 8, 72, 139, 77, 96],
             ToggleOffset = 19, ValueOffset = 20,
             Asm =
             [
@@ -317,8 +321,8 @@ internal static class ProfileFeatureCatalog
                 117, 6,
                 // imul edi,[value]
                 139, 13, 2, 0, 0, 0, 15, 175, 255,
-                // mov rcx,[rax+48h] (original second instr)
-                72, 139, 24, 72,
+                // mov rcx,[rbp+60h] (original second instr)
+                72, 139, 77, 96,
             ],
         },
 
@@ -351,7 +355,7 @@ internal static class ProfileFeatureCatalog
             Key = "RemoveBuildCap", Name = "Remove Build Cap",
             Signature = "E8 ? ? ? ? F3 0F ? ? ? 48 8B ? ? ? 48 8B",
             MatchOffset = 5, HookSize = 5,
-            ExpectedOriginal = [243, 15, 17, 69, 0],
+            ExpectedOriginal = [243, 15, 17, 67, 68],
             ToggleOffset = 14, ValueOffset = -1,
             Asm =
             [
@@ -361,8 +365,8 @@ internal static class ProfileFeatureCatalog
                 117, 3,
                 // xorps xmm0,xmm0 (zero the cap)
                 15, 87, 192,
-                // movss [rbp+0],xmm0 (original)
-                243, 15, 17, 69, 0,
+                // movss [rbx+44h],xmm0 (original)
+                243, 15, 17, 67, 68,
             ],
         },
 
@@ -398,7 +402,7 @@ internal static class ProfileFeatureCatalog
             Key = "Acceleration", Name = "Acceleration Override",
             Signature = "F3 0F ? ? ? 41 0F ? ? 0F C6 DB ? 41 0F",
             MatchOffset = 0, HookSize = 5,
-            ExpectedOriginal = [243, 15, 16, 25, 243],
+            ExpectedOriginal = [243, 15, 16, 93, 12],
             ToggleOffset = 14, ValueOffset = 15,
             Asm =
             [
@@ -408,8 +412,8 @@ internal static class ProfileFeatureCatalog
                 117, 3,
                 // movss xmm3,[value]
                 243, 15, 16, 29, 2, 0, 0, 0,
-                // movss xmm3,[rcx] (original)
-                243, 15, 16, 25, 243,
+                // movss xmm3,[rbp+0Ch] (original)
+                243, 15, 16, 93, 12,
             ],
         },
 
@@ -420,7 +424,7 @@ internal static class ProfileFeatureCatalog
             Key = "SpeedTrapMultiplier", Name = "Speed Trap Multiplier",
             Signature = "0F 29 ? ? ? 48 8B ? 48 8B ? ? ? ? ? 48 85 ? 74",
             MatchOffset = 0, HookSize = 5,
-            ExpectedOriginal = [15, 41, 116, 36, 64],
+            ExpectedOriginal = [15, 41, 68, 36, 48],
             ToggleOffset = 14, ValueOffset = 15,
             Asm =
             [
@@ -430,8 +434,8 @@ internal static class ProfileFeatureCatalog
                 117, 3,
                 // mulss xmm0,[value]
                 243, 15, 89, 5, 2, 0, 0, 0,
-                // movaps [rsp+40h],xmm6 (original)
-                15, 41, 116, 36, 64,
+                // movaps [rsp+30h],xmm0 (original)
+                15, 41, 68, 36, 48,
             ],
         },
 
@@ -442,7 +446,7 @@ internal static class ProfileFeatureCatalog
             Key = "MissionTimeScale", Name = "Mission Time Scale",
             Signature = "F3 0F ? ? F3 0F ? ? ? ? ? ? 0F 2F ? 0F 87 ? ? ? ? C7 ? ? ? ? ? 00 00 00 00",
             MatchOffset = 0, HookSize = 12,
-            ExpectedOriginal = [243, 15, 92, 199, 243, 15, 17, 131, 76, 4, 0, 0],
+            ExpectedOriginal = [243, 15, 92, 199, 243, 15, 17, 135, 12, 4, 0, 0],
             ToggleOffset = 26, ValueOffset = 27,
             Asm =
             [
@@ -454,8 +458,8 @@ internal static class ProfileFeatureCatalog
                 243, 15, 89, 5, 2, 0, 0, 0,
                 // subss xmm0,xmm7 (original first)
                 243, 15, 92, 199,
-                // movss [rbx+44Ch],xmm0 (original second)
-                243, 15, 17, 131, 76, 4, 0, 0,
+                // movss [rdi+40Ch],xmm0 (original second)
+                243, 15, 17, 135, 12, 4, 0, 0,
             ],
         },
 
