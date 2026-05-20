@@ -28,6 +28,15 @@ public sealed class RuntimeHookEngine : IDisposable
     private Timer? _crcTimer;
     private int _crcTimerRunning;
     private static readonly Random _jitter = new();
+    private readonly List<IntegrityPatch> _integrityPatches = new();
+
+    private struct IntegrityPatch
+    {
+        public string Name;
+        public ulong Address;
+        public byte[] Original;
+        public byte[] Replacement;
+    }
 
     public bool IsAttached => _handle != IntPtr.Zero && _process is { HasExited: false };
     public List<string> Log { get; } = new();
@@ -177,6 +186,7 @@ public sealed class RuntimeHookEngine : IDisposable
     public void Detach()
     {
         StopCrcTimer();
+        RestoreIntegrityBypasses();
         RestoreRuntimeProfileHooks();
         RestoreCrcPointer();
         FreeCrcRetStub();
@@ -228,6 +238,18 @@ public sealed class RuntimeHookEngine : IDisposable
         try { WriteUInt64(_crcFunctionPointerAddress, _crcOriginalPointer); }
         catch (Exception ex) { L($"CRC pointer restore failed: {ex.Message}"); }
         _crcBypassActive = false;
+    }
+
+    private void RestoreIntegrityBypasses()
+    {
+        if (_integrityPatches.Count == 0) return;
+        foreach (var ip in _integrityPatches)
+        {
+            try { WriteProtectedBytes(ip.Address, ip.Original); }
+            catch (Exception ex) { L($"Could not restore integrity bypass {ip.Name}: {ex.Message}"); }
+        }
+        if (_integrityPatches.Count > 0) L($"Restored {_integrityPatches.Count} integrity bypass patch(es).");
+        _integrityPatches.Clear();
     }
 
     private void FreeCrcRetStub()
@@ -444,8 +466,103 @@ public sealed class RuntimeHookEngine : IDisposable
         _crcRetAddress = retStubAddr;
         _crcRetStubAddress = retStubAddr;
         _crcBypassActive = true;
+        ApplyIntegrityBypasses(bytes);
         StartCrcTimer();
         L($"CRC bypass armed. ptr=0x{fnPtrAddr:X}, ret-stub=0x{retStubAddr:X} (dedicated cave)");
+    }
+
+    /// <summary>
+    /// Patch 5 integrity check functions to always return "pass".
+    /// Each check verifies code section integrity by hashing or comparing bytes.
+    /// We patch the conditional jump after each check so it always takes the "match/pass" path.
+    /// These patches are included in the heartbeat dance so they're restored during the clean window.
+    /// </summary>
+    private void ApplyIntegrityBypasses(byte[] moduleBytes)
+    {
+        var bypasses = new (string Name, string Signature, int PatchOffset, int PatchLen, byte[] Expected, byte[] Replace)[]
+        {
+            // 1. MemCmp_check: TEST EAX,EAX / JNZ mismatch → NOP NOP (always fall through to match path)
+            // Pattern: CALL memcmp / MOV RBX,RAX / MOV RCX,RAX / CALL check / TEST EAX,EAX / JNZ
+            ("MemCmp",
+             "E8 ?? ?? ?? ?? 48 8B D8 48 8B C8 E8 ?? ?? ?? ?? 85 C0 75",
+             18, 2,
+             [0x75],      // JNZ
+             [0x90]),     // NOP — first byte only, we NOP both bytes below
+
+            // 2. PageHash_start: TEST RAX,RAX / JNZ → NOP NOP (always take "hash was 0 = clean" path)
+            ("PageHash",
+             "48 83 EC 20 48 8B F1 BA 02 00 00 00 48 8B 89 50 02 00 00 E8 ?? ?? ?? ?? 48 8B F8 48 85 C0 75",
+             31, 2,
+             [0x75],      // JNZ
+             [0x90]),     // NOP
+
+            // 3. TextSection_hash: TEST RAX,RAX / CMOVNZ ECX,EDX → NOP NOP NOP (flag never set to 1)
+            ("TextHash",
+             "48 8D 15 ?? ?? ?? ?? 48 8B C8 FF 15 ?? ?? ?? ?? 0F B6 0D ?? ?? ?? ?? BA 01 00 00 00 48 85 C0 0F 45",
+             32, 3,
+             [0x0F, 0x45], // CMOVNZ
+             [0x90, 0x90]), // NOP NOP
+
+            // 4. CodeSection_verify: CALL verify_chunk → MOV EAX,1 (always return pass)
+            ("CodeSection",
+             "48 8D 59 08 48 8B FA 48 8B CB BA 20 00 00 00 E8",
+             15, 5,
+             [0xE8],       // CALL
+             [0xB8]),      // MOV EAX, imm32 (first byte; rest is 01 00 00 00)
+
+            // 5. Checksum_verify: TEST AL,AL / JZ fail → NOP NOP (always "pass")
+            ("Checksum",
+             "48 8B D6 48 8B CF E8 ?? ?? ?? ?? 84 C0 74",
+             13, 2,
+             [0x74],       // JZ
+             [0x90]),      // NOP
+        };
+
+        foreach (var (name, sig, patchOffset, patchLen, expected, replace) in bypasses)
+        {
+            try
+            {
+                var pattern = Pattern.Parse(sig);
+                var found = false;
+                foreach (var off in Pattern.FindAll(moduleBytes, pattern, 32))
+                {
+                    var addr = _mainBase + (ulong)(off + patchOffset);
+                    var current = ReadBytes(addr, patchLen);
+                    if (current.Length < patchLen) continue;
+
+                    // Verify the byte we're about to patch matches what we expect
+                    if (current[0] != expected[0]) continue;
+
+                    // Build replacement bytes
+                    var patch = new byte[patchLen];
+                    if (name == "CodeSection")
+                    {
+                        // Special case: replace CALL (5 bytes) with MOV EAX, 1 (5 bytes)
+                        patch[0] = 0xB8; patch[1] = 0x01; patch[2] = 0x00; patch[3] = 0x00; patch[4] = 0x00;
+                    }
+                    else
+                    {
+                        // NOP out all patch bytes
+                        for (var i = 0; i < patchLen; i++) patch[i] = 0x90;
+                    }
+
+                    WriteProtectedBytes(addr, patch);
+                    _integrityPatches.Add(new IntegrityPatch
+                    {
+                        Name = name,
+                        Address = addr,
+                        Original = current,
+                        Replacement = patch,
+                    });
+                    L($"Integrity bypass: {name} patched at 0x{addr:X}");
+                    found = true;
+                    break;
+                }
+                if (!found) L($"Integrity bypass: {name} NOT FOUND (skipped)");
+            }
+            catch (Exception ex) { L($"Integrity bypass {name} failed: {ex.Message}"); }
+        }
+        L($"Integrity bypasses applied: {_integrityPatches.Count}/5");
     }
 
     private void StartCrcTimer()
@@ -483,6 +600,8 @@ public sealed class RuntimeHookEngine : IDisposable
                 {
                     foreach (var det in _hooks.Values)
                         WriteProtectedBytes(det.Address, det.Original);
+                    foreach (var ip in _integrityPatches)
+                        WriteProtectedBytes(ip.Address, ip.Original);
                     WriteUInt64(_crcFunctionPointerAddress, _crcOriginalPointer);
                 }
                 catch (Exception ex) { L($"CRC phase-1 (restore) failed: {ex.Message}"); return; }
@@ -501,6 +620,8 @@ public sealed class RuntimeHookEngine : IDisposable
                 try
                 {
                     WriteUInt64(_crcFunctionPointerAddress, _crcRetAddress);
+                    foreach (var ip in _integrityPatches)
+                        WriteProtectedBytes(ip.Address, ip.Replacement);
                     foreach (var det in _hooks.Values)
                         WriteProtectedBytes(det.Address, det.Patch);
                 }
