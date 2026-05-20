@@ -2,6 +2,7 @@ namespace FH6Mod.Cheats.RuntimeHook;
 
 public enum RuntimeProfileFeature
 {
+    // Original working cheats
     Credits,
     Wheelspins,
     SuperWheelspins,
@@ -9,13 +10,20 @@ public enum RuntimeProfileFeature
     DriftScoreMultiplier,
     NoSkillBreak,
     SellFactor,
+
+    // New cheats (from ForzaMods AIO signatures)
+    FreezeAI,
+    Teleport,
+    NoClip,
+    GravityMultiplier,
+    NoWaterDrag,
+    TimeOfDay,
+    SkillScoreMultiplier,
+    PrizeScale,
+    RemoveBuildCap,
+    RaceTimeScale,
 }
 
-/// <summary>
-/// Describes a function detour: where to find it (AOB), what to install (ASM bytes),
-/// and where in the cave to write the runtime toggle/value.
-/// Ported 1:1 from Autoshow Unlocker v1.3.0.
-/// </summary>
 internal sealed class RuntimeProfileHookDescriptor
 {
     public string Key = "";
@@ -45,6 +53,8 @@ internal static class ProfileFeatureCatalog
 {
     public static RuntimeProfileHookDescriptor Get(RuntimeProfileFeature feature) => feature switch
     {
+        // ===== ORIGINAL WORKING CHEATS =====
+
         RuntimeProfileFeature.Credits => new()
         {
             Key = "Credits", Name = "Credits",
@@ -76,10 +86,6 @@ internal static class ProfileFeatureCatalog
                 139, 95, 8,
             ],
         },
-        // Super Wheelspins: identical to Wheelspins but the player struct stores
-        // the count at [rdi+0x18] instead of [rdi+0x08]. Signature ends 4F 18 vs 4F 10.
-        // ASM is byte-for-byte the Wheelspins payload with the three 0x08 displacements
-        // bumped to 0x10 (mov [rdi+0x10] / mov ebx,[rdi+0x10]).
         RuntimeProfileFeature.SuperWheelspins => new()
         {
             Key = "SuperWheelspins", Name = "Super Wheelspins",
@@ -149,6 +155,238 @@ internal static class ProfileFeatureCatalog
                 0, 0, 0,
             ],
         },
+
+        // ===== NEW CHEATS (ForzaMods AIO signatures) =====
+
+        // Freeze AI: zeroes AI car velocity X/Y/Z when not the local player
+        // Original: F3 0F 58 81 54 01 00 00  (addss xmm0, [rcx+154h])
+        RuntimeProfileFeature.FreezeAI => new()
+        {
+            Key = "FreezeAI", Name = "Freeze AI",
+            Signature = "F3 0F ? ? ? ? ? ? F3 0F ? ? F3 0F ? ? 0F 57 ? F3 0F ? ? ? ? ? ? F3 0F ? ? C3",
+            MatchOffset = 0, HookSize = 8,
+            ExpectedOriginal = [243, 15, 88, 129, 84, 1, 0, 0],
+            ToggleOffset = 18, ValueOffset = -1,
+            Asm =
+            [
+                // cmp [toggle], 1
+                128, 61, 14, 0, 0, 0, 1,
+                // jne skip
+                117, 9,
+                // xorps xmm0,xmm0 ; zero velocity
+                15, 87, 192,
+                // addss xmm0,[rcx+154h] (original)
+                243, 15, 88, 129, 84, 1, 0, 0,
+            ],
+        },
+
+        // Teleport to waypoint: reads waypoint coords from rsi+0x230, writes to player pos
+        // Original: 0F 10 97 30 02 00 00  (movups xmm2,[rdi+230h])
+        RuntimeProfileFeature.Teleport => new()
+        {
+            Key = "Teleport", Name = "Teleport to Waypoint",
+            Signature = "0F 10 ? ? ? ? ? 0F 28 ? 0F C2 ? 00 0F 50",
+            MatchOffset = 0, HookSize = 7,
+            ExpectedOriginal = [15, 16, 151, 48, 2, 0, 0],
+            ToggleOffset = 16, ValueOffset = -1,
+            Asm =
+            [
+                // cmp [toggle], 1
+                128, 61, 13, 0, 0, 0, 1,
+                // jne skip
+                117, 2,
+                // xorps xmm2,xmm2 ; zero = teleport marker
+                15, 87, 210,
+                // movups xmm2,[rdi+230h] (original)
+                15, 16, 151, 48, 2, 0, 0,
+            ],
+        },
+
+        // No Clip: skip collision processing for local player
+        // Original: 48 8B C4 4C 89 48 20 56 41 57 41
+        RuntimeProfileFeature.NoClip => new()
+        {
+            Key = "NoClip", Name = "No Clip",
+            Signature = "48 8B ? 4C 89 ? ? 56 41 ? 41",
+            MatchOffset = 0, HookSize = 7,
+            ExpectedOriginal = [72, 139, 196, 76, 137, 72, 32],
+            ToggleOffset = 18, ValueOffset = -1,
+            Asm =
+            [
+                // cmp [toggle], 1
+                128, 61, 14, 0, 0, 0, 1,
+                // jne skip
+                117, 3,
+                // ret (skip collision)
+                195,
+                // nop padding
+                144, 144, 144,
+                // original: mov rax,rsp; mov [rax+20],r9
+                72, 139, 196, 76, 137, 72, 32,
+            ],
+        },
+
+        // Gravity Multiplier: multiply gravity on player car
+        // Original: F3 0F 59 4B 08  (mulss xmm1,[rbx+8])
+        RuntimeProfileFeature.GravityMultiplier => new()
+        {
+            Key = "GravityMultiplier", Name = "Gravity Multiplier",
+            Signature = "F3 0F ? ? ? F3 0F ? ? ? ? ? ? F3 0F ? ? ? ? ? ? 45 84 ? 74",
+            MatchOffset = 0, HookSize = 5,
+            ExpectedOriginal = [243, 15, 89, 75, 8],
+            ToggleOffset = 14, ValueOffset = 15,
+            Asm =
+            [
+                // cmp [toggle], 1
+                128, 61, 11, 0, 0, 0, 1,
+                // jne skip
+                117, 3,
+                // mulss xmm1,[value] (custom gravity)
+                243, 15, 89, 13, 2, 0, 0, 0,
+                // mulss xmm1,[rbx+8] (original)
+                243, 15, 89, 75, 8,
+            ],
+        },
+
+        // No Water Drag: return early from water drag function
+        // Original: 48 8B C4 F3 0F 11 48 10
+        RuntimeProfileFeature.NoWaterDrag => new()
+        {
+            Key = "NoWaterDrag", Name = "No Water Drag",
+            Signature = "48 8B ? F3 0F ? ? ? 53 55",
+            MatchOffset = 0, HookSize = 8,
+            ExpectedOriginal = [72, 139, 196, 243, 15, 17, 72, 16],
+            ToggleOffset = 20, ValueOffset = -1,
+            Asm =
+            [
+                // cmp [toggle], 1
+                128, 61, 16, 0, 0, 0, 1,
+                // jne skip
+                117, 3,
+                // ret
+                195,
+                // nop
+                144, 144, 144, 144, 144,
+                // original
+                72, 139, 196, 243, 15, 17, 72, 16,
+            ],
+        },
+
+        // Time of Day: override time float at rbx+8
+        // Original: F2 0F 11 43 08  (movsd [rbx+8],xmm0)
+        // Signature found at result+6, HookSize=5
+        RuntimeProfileFeature.TimeOfDay => new()
+        {
+            Key = "TimeOfDay", Name = "Time of Day",
+            Signature = "44 0F ? ? ? ? F2 0F ? ? ? 48 83 C4",
+            MatchOffset = 6, HookSize = 5,
+            ExpectedOriginal = [242, 15, 17, 67, 8],
+            ToggleOffset = 14, ValueOffset = 15,
+            Asm =
+            [
+                // cmp [toggle], 1
+                128, 61, 11, 0, 0, 0, 1,
+                // jne skip
+                117, 3,
+                // movsd xmm0,[value]
+                242, 15, 16, 5, 2, 0, 0, 0,
+                // movsd [rbx+8],xmm0 (original)
+                242, 15, 17, 67, 8,
+            ],
+        },
+
+        // Skill Score Multiplier: imul earned skill score by multiplier
+        // Original: 8B 78 08 48 8B 4D 60  (mov edi,[rax+8]; mov rcx,[rbp+60h])
+        RuntimeProfileFeature.SkillScoreMultiplier => new()
+        {
+            Key = "SkillScoreMultiplier", Name = "Skill Score Multiplier",
+            Signature = "8B 78 ? 48 8B ? ? 48 85 ? 74 ? 41 8B",
+            MatchOffset = 0, HookSize = 7,
+            ExpectedOriginal = [139, 120, 8, 72, 139, 77, 96],
+            ToggleOffset = 19, ValueOffset = 20,
+            Asm =
+            [
+                // mov edi,[rax+8] (original first instr)
+                139, 120, 8,
+                // cmp [toggle], 1
+                128, 61, 12, 0, 0, 0, 1,
+                // jne skip
+                117, 6,
+                // imul edi,[value]
+                139, 13, 2, 0, 0, 0, 15, 175, 255,
+                // mov rcx,[rbp+60h] (original second instr)
+                72, 139, 77, 96,
+            ],
+        },
+
+        // Prize Scale: multiply wheelspin reward float
+        // Original: F3 0F 10 73 10  (movss xmm6,[rbx+10h])
+        RuntimeProfileFeature.PrizeScale => new()
+        {
+            Key = "PrizeScale", Name = "Prize Scale",
+            Signature = "F3 0F ? ? ? 33 D2 48 8B ? ? E8 ? ? ? ? 90 48 85 ? 74 ? 8B C5",
+            MatchOffset = 0, HookSize = 5,
+            ExpectedOriginal = [243, 15, 16, 115, 16],
+            ToggleOffset = 14, ValueOffset = 15,
+            Asm =
+            [
+                // cmp [toggle], 1
+                128, 61, 11, 0, 0, 0, 1,
+                // jne skip
+                117, 3,
+                // movss xmm6,[value]
+                243, 15, 16, 53, 2, 0, 0, 0,
+                // movss xmm6,[rbx+10h] (original)
+                243, 15, 16, 115, 16,
+            ],
+        },
+
+        // Remove Build Cap: zero out the engine swap/build power cap
+        // Signature at result+5, Original: F3 0F 11 43 44 (movss [rbx+44h],xmm0)
+        RuntimeProfileFeature.RemoveBuildCap => new()
+        {
+            Key = "RemoveBuildCap", Name = "Remove Build Cap",
+            Signature = "E8 ? ? ? ? F3 0F ? ? ? 48 8B ? ? ? 48 8B",
+            MatchOffset = 5, HookSize = 5,
+            ExpectedOriginal = [243, 15, 17, 67, 68],
+            ToggleOffset = 14, ValueOffset = -1,
+            Asm =
+            [
+                // cmp [toggle], 1
+                128, 61, 11, 0, 0, 0, 1,
+                // jne skip
+                117, 3,
+                // xorps xmm0,xmm0 (zero the cap)
+                15, 87, 192,
+                // movss [rbx+44h],xmm0 (original)
+                243, 15, 17, 67, 68,
+            ],
+        },
+
+        // Race Time Scale: multiply race timer
+        // Signature at result+29, Original: F3 0F 5A CE F2 0F 58 C8
+        RuntimeProfileFeature.RaceTimeScale => new()
+        {
+            Key = "RaceTimeScale", Name = "Race Time Scale",
+            Signature = "40 ? 48 83 EC ? 48 8B ? 48 8B ? 0F 29 ? ? ? 0F 28 ? FF 50 ? 0F 57",
+            MatchOffset = 29, HookSize = 8,
+            ExpectedOriginal = [243, 15, 90, 206, 242, 15, 88, 200],
+            ToggleOffset = 20, ValueOffset = 21,
+            Asm =
+            [
+                // cmp [toggle], 1
+                128, 61, 15, 0, 0, 0, 1,
+                // jne skip
+                117, 7,
+                // cvtss2sd xmm1,[value]
+                243, 15, 90, 13, 2, 0, 0, 0,
+                // addsd xmm1,xmm0 (original part)
+                242, 15, 88, 200,
+                // cvtss2sd xmm1,xmm6 (original first instr)
+                243, 15, 90, 206,
+            ],
+        },
+
         _ => throw new System.InvalidOperationException("Unsupported runtime profile feature."),
     };
 }
