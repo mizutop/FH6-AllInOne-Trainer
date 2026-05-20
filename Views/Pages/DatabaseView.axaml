@@ -56,6 +56,23 @@
 
             <TextBlock Text="ONE-SHOT SQL ACTIONS" Classes="eyebrow" />
 
+            <!-- Unlock Everything mega button -->
+            <Border Padding="22" CornerRadius="12" BorderThickness="2"
+                    Background="#2AFF6A1F" BorderBrush="{DynamicResource AccentBrush}">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="18">
+                    <Border Grid.Column="0" Width="50" Height="50" CornerRadius="12" Background="#3AFF6A1F">
+                        <materialIcons:MaterialIcon Kind="LockOpenCheckOutline" Width="26" Height="26"
+                            Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="Unlock Everything" FontSize="18" FontWeight="Bold" />
+                        <TextBlock Text="Free Cars + Install Flags + Autoshow Unlock + Clear NEW Tags + Add All Cars — all at once." Classes="dim" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Column="2" Classes="primary" FontSize="14" Padding="20,10"
+                            Content="UNLOCK ALL" Command="{Binding UnlockEverythingCommand}" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
             <!-- Clear NEW tag -->
             <Border Classes="card" Padding="22">
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="18">

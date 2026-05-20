@@ -40,6 +40,32 @@ public partial class DatabaseViewModel : PageViewModelBase
         StatusMessage = ok ? $"{label} applied. Effect persists until game restart." : _cheats.LastError;
     }
 
+    [RelayCommand]
+    private void UnlockEverything()
+    {
+        var errors = new System.Collections.Generic.List<string>();
+        var labels = new System.Collections.Generic.List<string>();
+
+        void TryRun(SqlFeature f, string label)
+        {
+            var ok = _cheats.RunSql(f);
+            if (ok) labels.Add(label);
+            else errors.Add(label);
+        }
+
+        TryRun(SqlFeature.FreeCarPrices, "Free Cars");
+        TryRun(SqlFeature.InstallFlags, "Install Flags");
+        TryRun(SqlFeature.AutoshowUnlock, "Autoshow Unlock");
+        TryRun(SqlFeature.ClearNewTag, "Clear NEW Tags");
+        TryRun(SqlFeature.AddAllCars, "Add All Cars");
+
+        DiagnosticsMessage = _cheats.Diagnostics;
+        StatusIsError = errors.Count > 0;
+        StatusMessage = errors.Count == 0
+            ? $"Unlock Everything applied — {string.Join(", ", labels)}. All cars free, visible, and in garage."
+            : $"Partially applied. Failed: {string.Join(", ", errors)}";
+    }
+
     [RelayCommand] private void ClearNewTag()     => Run(SqlFeature.ClearNewTag,     "Clear NEW tags");
     [RelayCommand] private void FreeCarPrices()   => Run(SqlFeature.FreeCarPrices,   "Free car prices");
     [RelayCommand] private void InstallFlags()    => Run(SqlFeature.InstallFlags,    "Install flags");

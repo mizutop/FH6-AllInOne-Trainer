@@ -9,7 +9,7 @@
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="36,28" Spacing="20" b:StaggerEntrance.Enable="True">
 
-            <!-- Page header -->
+            <!-- Header -->
             <StackPanel Orientation="Horizontal" Spacing="14">
                 <Border Background="{DynamicResource Surface2Brush}"
                         BorderBrush="{DynamicResource SurfaceBorderBrush}"
@@ -23,59 +23,84 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- Card 1: status of currently shipping features (blue tint) -->
+            <!-- Quick Start mega button -->
+            <Border Padding="26" CornerRadius="12" BorderThickness="2"
+                    Background="#2AFF6A1F" BorderBrush="{DynamicResource AccentBrush}">
+                <StackPanel Spacing="16">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="18">
+                        <Border Grid.Column="0" Width="56" Height="56" CornerRadius="14" Background="#3AFF6A1F">
+                            <materialIcons:MaterialIcon Kind="RocketLaunchOutline" Width="30" Height="30"
+                                Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="Quick Start" FontSize="22" FontWeight="Bold" />
+                            <TextBlock Text="One click: 999M Credits + Free Cars + Autoshow Unlock + All Cars in Garage." Classes="dim" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button Grid.Column="2" Classes="primary" FontSize="15" Padding="24,12"
+                                Content="GO" Command="{Binding QuickMaxCreditsAndCarsCommand}" VerticalAlignment="Center" />
+                    </Grid>
+                    <Border IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                            Padding="12,8" CornerRadius="8" BorderThickness="1"
+                            Background="#1A3DDC97" BorderBrush="#3DDC97">
+                        <TextBlock Text="{Binding StatusMessage}" FontSize="13"
+                                   Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap" />
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Working features overview -->
             <Border Padding="22" CornerRadius="12" BorderThickness="1"
                     Background="#1A4DA3FF" BorderBrush="#4DA3FF">
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="18">
                     <Border Grid.Column="0" Width="46" Height="46" CornerRadius="10"
                             Background="#264DA3FF" VerticalAlignment="Top">
-                        <materialIcons:MaterialIcon Kind="InformationOutline" Width="24" Height="24"
+                        <materialIcons:MaterialIcon Kind="CheckCircleOutline" Width="24" Height="24"
                             Foreground="#7FBFFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <StackPanel Grid.Column="1" Spacing="8">
                         <TextBlock FontWeight="SemiBold" FontSize="15" Foreground="#7FBFFF"
-                                   Text="What works right now" />
+                                   Text="Working features" />
                         <TextBlock TextWrapping="Wrap" FontSize="13"
                                    Foreground="{DynamicResource TextPrimary}"
-                                   Text="Only the Unlocks and Database tabs ship working features in this build &#x2014; everything you see there has been live-tested on Forza Horizon 6. As more mods for FH6 get released and ported in, fresh tabs will start appearing in the sidebar. Check back after each Forza patch cycle." />
+                                   Text="Unlocks tab: Credits (CR), Wheelspins, Super Wheelspins, Skill Points, Sell Payout Multiplier. Database tab: Free Cars, Autoshow Unlock, Install Flags, Clear NEW Tags, Add All Cars to Garage. All features are live-tested on FH6." />
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Card 2: thank-you / early build note (green tint) -->
+            <!-- How to use -->
             <Border Padding="22" CornerRadius="12" BorderThickness="1"
                     Background="#1A3DDC97" BorderBrush="#3DDC97">
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="18">
                     <Border Grid.Column="0" Width="46" Height="46" CornerRadius="10"
                             Background="#263DDC97" VerticalAlignment="Top">
-                        <materialIcons:MaterialIcon Kind="HeartOutline" Width="24" Height="24"
+                        <materialIcons:MaterialIcon Kind="HelpCircleOutline" Width="24" Height="24"
                             Foreground="#6FE3B9" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <StackPanel Grid.Column="1" Spacing="8">
                         <TextBlock FontWeight="SemiBold" FontSize="15" Foreground="#6FE3B9"
-                                   Text="Thanks for using the trainer" />
+                                   Text="How to use" />
                         <TextBlock TextWrapping="Wrap" FontSize="13"
                                    Foreground="{DynamicResource TextPrimary}"
-                                   Text="Honestly didn't expect anyone to grab this restyle so quickly &#x2014; this is a very early build, so expect rough edges, missing pieces, and the occasional weird quirk. If something breaks or you have an idea worth porting, open an issue on the GitHub repo. Happy modding, and have fun. &#x2014; Chaarkor" />
+                                   Text="1. Start Forza Horizon 6 in Free Roam / Solo mode. 2. Wait for the green status dot (trainer auto-attaches). 3. Use the Unlocks tab for Credits, Wheelspins, Skill Points. 4. Use the Database tab to unlock cars and modify the Autoshow. 5. Values apply on the next game event (finish a race, sell a car, etc.)." />
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Card 3: pointer to Settings (personalisation + credits) (violet tint) -->
+            <!-- Credits -->
             <Border Padding="22" CornerRadius="12" BorderThickness="1"
                     Background="#1A8B5CF6" BorderBrush="#8B5CF6">
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="18">
                     <Border Grid.Column="0" Width="46" Height="46" CornerRadius="10"
                             Background="#268B5CF6" VerticalAlignment="Top">
-                        <materialIcons:MaterialIcon Kind="CogOutline" Width="24" Height="24"
+                        <materialIcons:MaterialIcon Kind="HeartOutline" Width="24" Height="24"
                             Foreground="#B49DFB" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <StackPanel Grid.Column="1" Spacing="8">
                         <TextBlock FontWeight="SemiBold" FontSize="15" Foreground="#B49DFB"
-                                   Text="Make it yours &#x2014; and see who built the cheats" />
+                                   Text="Credits" />
                         <TextBlock TextWrapping="Wrap" FontSize="13"
                                    Foreground="{DynamicResource TextPrimary}"
-                                   Text="Head over to the Settings tab to pick an accent colour (10 palettes), toggle the ambient hover glow and animations, choose where settings get saved, and read the full credits &#x2014; including the paris' club Discord link, since almost every cheat in this trainer is a port of their Forza Horizon 6 - Autoshow Unlocker." />
+                                   Text="Core cheats by paris' club (Autoshow Unlocker). UI originally by Chaarkor. Improved and maintained by the community. Check the Settings tab for theme customization." />
                     </StackPanel>
                 </Grid>
             </Border>

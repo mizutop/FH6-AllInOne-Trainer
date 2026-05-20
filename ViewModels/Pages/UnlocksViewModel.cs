@@ -14,9 +14,7 @@ public partial class UnlocksViewModel : PageViewModelBase
     private readonly CheatService _cheats;
 
     public override string PageTitle => "Unlocks";
-    public override string PageSubtitle => "Credits, wheelspins, skill points, drift score, no skill break, sell payout.";
-
-
+    public override string PageSubtitle => "Credits, wheelspins, skill points, sell payout.";
     public override MaterialIconKind PageIcon => MaterialIconKind.LockOpenVariantOutline;
 
     [ObservableProperty] private string? _statusMessage;
@@ -25,19 +23,19 @@ public partial class UnlocksViewModel : PageViewModelBase
 
     // Credits
     [ObservableProperty] private bool _isCreditsOn;
-    [ObservableProperty] private string _creditsAmountText = "1000000";
+    [ObservableProperty] private string _creditsAmountText = "999999999";
 
     // Wheelspins
     [ObservableProperty] private bool _isWheelspinsOn;
-    [ObservableProperty] private string _wheelspinsAmountText = "100";
+    [ObservableProperty] private string _wheelspinsAmountText = "999";
 
     // Super Wheelspins
     [ObservableProperty] private bool _isSuperWheelspinsOn;
-    [ObservableProperty] private string _superWheelspinsAmountText = "100";
+    [ObservableProperty] private string _superWheelspinsAmountText = "999";
 
     // Skill Points
     [ObservableProperty] private bool _isSkillPointsOn;
-    [ObservableProperty] private string _skillPointsAmountText = "10000";
+    [ObservableProperty] private string _skillPointsAmountText = "999999";
 
     // Drift Multiplier
     [ObservableProperty] private bool _isDriftMultiOn;
@@ -58,11 +56,6 @@ public partial class UnlocksViewModel : PageViewModelBase
     private static int Parse(string s, int fallback)
         => int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : fallback;
 
-    /// <summary>
-    /// For float-typed runtime hooks (e.g. Drift Score Multiplier uses <c>mulss xmm,[rip+disp]</c>),
-    /// parse the textbox as float and return its IEEE-754 bit pattern as an int32 — the engine writes
-    /// 4 raw bytes which the game's float instruction then loads. Direct port of autoshow's behavior.
-    /// </summary>
     private static int ParseFloatAsIntBits(string s, float fallback)
     {
         if (!float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var f) || f <= 0)
@@ -75,7 +68,7 @@ public partial class UnlocksViewModel : PageViewModelBase
         var ok = _cheats.Apply(f, value, target);
         DiagnosticsMessage = _cheats.Diagnostics;
         SetStatus(ok, ok
-            ? (target ? $"{nameLabel} ON{(value != 0 ? $" — value {value:N0}" : "")}." : $"{nameLabel} OFF.")
+            ? (target ? $"{nameLabel} ON — value set to {value:N0}." : $"{nameLabel} OFF.")
             : _cheats.LastError);
     }
 
@@ -90,6 +83,36 @@ public partial class UnlocksViewModel : PageViewModelBase
     {
         StatusIsError = !ok;
         StatusMessage = msg;
+    }
+
+    // ===== Max All =====
+    [RelayCommand]
+    private void MaxAll()
+    {
+        var cr = 999_999_999;
+        var ws = 999;
+        var sws = 999;
+        var sp = 999_999;
+
+        CreditsAmountText = cr.ToString();
+        WheelspinsAmountText = ws.ToString();
+        SuperWheelspinsAmountText = sws.ToString();
+        SkillPointsAmountText = sp.ToString();
+
+        var ok1 = _cheats.Apply(RuntimeProfileFeature.Credits, cr, true);
+        IsCreditsOn = _cheats.IsActive(RuntimeProfileFeature.Credits);
+        var ok2 = _cheats.Apply(RuntimeProfileFeature.Wheelspins, ws, true);
+        IsWheelspinsOn = _cheats.IsActive(RuntimeProfileFeature.Wheelspins);
+        var ok3 = _cheats.Apply(RuntimeProfileFeature.SuperWheelspins, sws, true);
+        IsSuperWheelspinsOn = _cheats.IsActive(RuntimeProfileFeature.SuperWheelspins);
+        var ok4 = _cheats.Apply(RuntimeProfileFeature.SkillPoints, sp, true);
+        IsSkillPointsOn = _cheats.IsActive(RuntimeProfileFeature.SkillPoints);
+
+        var allOk = ok1 && ok2 && ok3 && ok4;
+        DiagnosticsMessage = _cheats.Diagnostics;
+        SetStatus(allOk, allOk
+            ? "Max All applied — Credits 999M, Wheelspins 999, Super Wheelspins 999, Skill Points 999K."
+            : _cheats.LastError);
     }
 
     // ===== Credits =====
@@ -112,6 +135,7 @@ public partial class UnlocksViewModel : PageViewModelBase
     }
     [RelayCommand] private void ApplyWheelspins()
         => ApplyValue(RuntimeProfileFeature.Wheelspins, Parse(WheelspinsAmountText, 100), "Wheelspins");
+    [RelayCommand] private void SetWheelspins(string? a) { if (a is not null) { WheelspinsAmountText = a; if (IsWheelspinsOn) ApplyWheelspins(); } }
 
     // ===== Super Wheelspins =====
     [RelayCommand] private void ToggleSuperWheelspins()
@@ -122,6 +146,7 @@ public partial class UnlocksViewModel : PageViewModelBase
     }
     [RelayCommand] private void ApplySuperWheelspins()
         => ApplyValue(RuntimeProfileFeature.SuperWheelspins, Parse(SuperWheelspinsAmountText, 100), "Super Wheelspins");
+    [RelayCommand] private void SetSuperWheelspins(string? a) { if (a is not null) { SuperWheelspinsAmountText = a; if (IsSuperWheelspinsOn) ApplySuperWheelspins(); } }
 
     // ===== Skill Points =====
     [RelayCommand] private void ToggleSkillPoints()
@@ -134,7 +159,7 @@ public partial class UnlocksViewModel : PageViewModelBase
         => ApplyValue(RuntimeProfileFeature.SkillPoints, Parse(SkillPointsAmountText, 10_000), "Skill Points");
     [RelayCommand] private void SetSkillPoints(string? a) { if (a is not null) { SkillPointsAmountText = a; if (IsSkillPointsOn) ApplySkillPoints(); } }
 
-    // ===== Drift Score Multiplier (float reinterpreted as int32 — game does mulss) =====
+    // ===== Drift Score Multiplier =====
     [RelayCommand] private void ToggleDriftMulti()
     {
         var on = !_cheats.IsActive(RuntimeProfileFeature.DriftScoreMultiplier);
@@ -144,7 +169,7 @@ public partial class UnlocksViewModel : PageViewModelBase
     [RelayCommand] private void ApplyDriftMulti()
         => ApplyValue(RuntimeProfileFeature.DriftScoreMultiplier, ParseFloatAsIntBits(DriftMultiText, 10f), "Drift Score x");
 
-    // ===== No Skill Break (toggle only, no value) =====
+    // ===== No Skill Break =====
     [RelayCommand] private void ToggleNoSkillBreak()
     {
         var on = !_cheats.IsActive(RuntimeProfileFeature.NoSkillBreak);

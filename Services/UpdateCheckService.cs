@@ -15,9 +15,9 @@ namespace FH6Mod.Services;
 /// </summary>
 public sealed class UpdateCheckService
 {
-    private const string LatestUrl = "https://api.github.com/repos/Chaarkoor/Chaarkors-FH6-Trainer/releases/latest";
-    public const string ReleasesUrl = "https://github.com/Chaarkoor/Chaarkors-FH6-Trainer/releases";
-    private const string UserAgent  = "ChaarkorFH6Mod-Updater";
+    private const string LatestUrl = "https://api.github.com/repos/changcheng967/FH6-AllInOne-Trainer/releases/latest";
+    public const string ReleasesUrl = "https://github.com/changcheng967/FH6-AllInOne-Trainer/releases";
+    private const string UserAgent  = "FH6AllInOne-Updater";
 
     public event Action? StateChanged;
 
