@@ -27,6 +27,7 @@ public sealed class RuntimeHookEngine : IDisposable
     private ulong _crcRetStubAddress;
     private Timer? _crcTimer;
     private int _crcTimerRunning;
+    private static readonly Random _jitter = new();
 
     public bool IsAttached => _handle != IntPtr.Zero && _process is { HasExited: false };
     public List<string> Log { get; } = new();
@@ -449,16 +450,24 @@ public sealed class RuntimeHookEngine : IDisposable
 
     private void StartCrcTimer()
     {
-        _crcTimer ??= new Timer(CrcTimerTick, null, 10_000, 10_000);
+        // First tick fires quickly (3s) to establish the clean window early.
+        // Subsequent ticks use a shorter 5s base interval with ±1.5s random jitter
+        // to prevent the game's integrity check from syncing with our timer.
+        _crcTimer ??= new Timer(CrcTimerTick, null, 3_000, Timeout.Infinite);
     }
 
     /// <summary>
     /// CRC heartbeat re-arm with thread suspension for atomic patching.
-    /// Phase 1: Suspend all FH6 threads, restore original bytes + CRC pointer atomically,
-    ///          resume threads. Game sees clean code for ~1s.
-    /// Phase 2: Suspend threads, re-apply all patches + CRC bypass, resume threads.
-    /// Thread suspension prevents the game from running partial integrity checks
-    /// while we're mid-patch (which caused false positives in the old approach).
+    ///
+    /// Timing: 5s base cycle (±1.5s jitter), 2s clean window.
+    /// Old approach was 10s cycle, 1s clean — the game's integrity check had a
+    /// 90% chance of hitting the patched window, causing the game to shut down.
+    /// New approach: ~3s patched / 2s clean = ~60% patched. With jitter the game
+    /// can't predict when patches are visible.
+    ///
+    /// Phase 1: Suspend threads, restore original bytes + CRC pointer atomically, resume.
+    /// Phase 2: Sleep 2s (game runs integrity check and passes).
+    /// Phase 3: Suspend threads, re-apply patches + CRC bypass, resume.
     /// </summary>
     private void CrcTimerTick(object? _)
     {
@@ -480,8 +489,9 @@ public sealed class RuntimeHookEngine : IDisposable
                 finally { ResumeAllGameThreads(threads); }
             }
 
-            // Give the game a window to run its integrity checks cleanly
-            Thread.Sleep(1000);
+            // Give the game a longer window (2s) to run its integrity checks cleanly.
+            // The old 1s window was too short — the check might not complete in time.
+            Thread.Sleep(2000);
 
             // Phase 2: re-apply patches atomically (all threads suspended)
             lock (_lock)
@@ -499,7 +509,17 @@ public sealed class RuntimeHookEngine : IDisposable
             }
         }
         catch (Exception ex) { L($"CRC tick uncaught: {ex.Message}"); }
-        finally { Interlocked.Exchange(ref _crcTimerRunning, 0); }
+        finally
+        {
+            Interlocked.Exchange(ref _crcTimerRunning, 0);
+            // Reschedule with random jitter: 5s base ± 1.5s
+            try
+            {
+                var nextMs = 5000 + _jitter.Next(-1500, 1501);
+                _crcTimer?.Change(nextMs, Timeout.Infinite);
+            }
+            catch { /* timer disposed during detach */ }
+        }
     }
 
     /// <summary>
