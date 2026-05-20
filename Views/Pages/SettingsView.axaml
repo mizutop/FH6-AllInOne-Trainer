@@ -27,7 +27,7 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- Preferences -->
+            <!-- PREFERENCES -->
             <StackPanel Spacing="10">
                 <TextBlock Text="PREFERENCES" Classes="eyebrow" />
                 <Border Classes="card" Padding="22">
@@ -122,6 +122,107 @@
                 </Border>
             </StackPanel>
 
+            <!-- DIAGNOSTICS -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="DIAGNOSTICS" Classes="eyebrow" />
+
+                <!-- Signature scan -->
+                <Border Classes="card" Padding="22">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                            <Border Grid.Column="0" Width="42" Height="42" CornerRadius="10" Background="{DynamicResource Surface2Brush}">
+                                <materialIcons:MaterialIcon Kind="MagnifyScan" Width="22" Height="22"
+                                    Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Signature scan" Classes="h3" />
+                                <TextBlock Text="Test all AOB patterns against the current FH6 binary without installing hooks. Requires FH6 running." Classes="dim" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+                        <Button Content="Scan All Signatures" Classes="accent"
+                                HorizontalAlignment="Left"
+                                IsEnabled="{Binding !IsScanning}"
+                                Command="{Binding ScanSignaturesCommand}" />
+                        <TextBox Text="{Binding ScanStatus}" IsReadOnly="True"
+                                 FontFamily="Consolas, Courier New, monospace" FontSize="12"
+                                 TextWrapping="Wrap" IsVisible="{Binding ScanStatus, Converter={StaticResource NotNullConverter}}"
+                                 MaxHeight="300" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Conflict detection -->
+                <Border Classes="card" Padding="22">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                            <Border Grid.Column="0" Width="42" Height="42" CornerRadius="10" Background="{DynamicResource Surface2Brush}">
+                                <materialIcons:MaterialIcon Kind="ShieldAlertOutline" Width="22" Height="22"
+                                    Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Conflict detection" Classes="h3" />
+                                <TextBlock Text="Check for other trainers (ForzaMods AIO, WeMod, etc.) that might conflict with this one." Classes="dim" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+                        <Button Content="Detect Conflicts" Classes="accent"
+                                HorizontalAlignment="Left"
+                                Command="{Binding DetectConflictsCommand}" />
+                        <Border IsVisible="{Binding HasConflicts}" Background="#33FF4444" CornerRadius="8" Padding="12">
+                            <TextBlock Text="{Binding ConflictStatus}" TextWrapping="Wrap"
+                                       Foreground="#FF6666" FontFamily="Consolas, Courier New, monospace" FontSize="12" />
+                        </Border>
+                        <Border IsVisible="{Binding ConflictStatus, Converter={StaticResource NotNullConverter}}" Background="{DynamicResource Surface2Brush}" CornerRadius="8" Padding="12">
+                            <TextBlock Text="{Binding ConflictStatus}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextSecondary}" FontFamily="Consolas, Courier New, monospace" FontSize="12" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- PROFILES -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="CHEAT PROFILES" Classes="eyebrow" />
+
+                <Border Classes="card" Padding="22">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                            <Border Grid.Column="0" Width="42" Height="42" CornerRadius="10" Background="{DynamicResource Surface2Brush}">
+                                <materialIcons:MaterialIcon Kind="ContentSaveOutline" Width="22" Height="22"
+                                    Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Save &amp; load profiles" Classes="h3" />
+                                <TextBlock Text="Save your current cheat setup to a named profile. Load it later to quickly restore your favourite configuration." Classes="dim" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Save new profile -->
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <TextBox PlaceholderText="Profile name..." Text="{Binding ProfileName, Mode=TwoWay}" />
+                            <Button Grid.Column="1" Content="Save" Classes="accent"
+                                    Command="{Binding SaveProfileCommand}" />
+                        </Grid>
+
+                        <!-- Load / Delete -->
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                            <ComboBox ItemsSource="{Binding SavedProfiles}"
+                                      SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
+                                      PlaceholderText="Saved profiles..." />
+                            <Button Grid.Column="1" Content="Load" Classes="ghost"
+                                    Command="{Binding LoadProfileCommand}" />
+                            <Button Grid.Column="2" Content="Delete" Classes="ghost"
+                                    Command="{Binding DeleteProfileCommand}" />
+                        </Grid>
+
+                        <Button Content="Open profiles folder" Classes="ghost"
+                                HorizontalAlignment="Left"
+                                Command="{Binding OpenProfilesFolderCommand}" />
+
+                        <TextBlock Text="{Binding ProfileStatus}" Classes="dim" TextWrapping="Wrap"
+                                   IsVisible="{Binding ProfileStatus, Converter={StaticResource NotNullConverter}}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
             <!-- ABOUT / CREDITS hero card -->
             <Border Classes="card" Padding="28">
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="22">
@@ -138,7 +239,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
                             <Border Background="{DynamicResource Surface2Brush}"
                                     CornerRadius="999" Padding="10,4">
-                                <TextBlock Text="v3.0.0  ·  GPL-3.0" FontSize="11"
+                                <TextBlock Text="v3.1.0  ·  GPL-3.0" FontSize="11"
                                            Foreground="{DynamicResource TextSecondary}" />
                             </Border>
                             <Border Background="{DynamicResource Surface2Brush}"
@@ -151,11 +252,10 @@
                 </Grid>
             </Border>
 
-            <!-- ===== CREDITS & THANKS ===== -->
+            <!-- CREDITS & THANKS -->
             <StackPanel Spacing="10">
                 <TextBlock Text="CREDITS &amp; THANKS" Classes="eyebrow" />
 
-                <!-- paris' club — the mods this trainer is built on -->
                 <Border Classes="card" Padding="22">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
                         <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10"
@@ -181,7 +281,6 @@
                     </Grid>
                 </Border>
 
-                <!-- Reloaded -->
                 <Border Classes="card" Padding="22">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
                         <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10"
@@ -201,33 +300,6 @@
                     </Grid>
                 </Border>
             </StackPanel>
-
-            <!-- Settings list -->
-            <ItemsControl ItemsSource="{Binding Features}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel ItemWidth="320" ItemHeight="92" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:FeatureRow">
-                        <Border Classes="card" Margin="0,0,12,12">
-                            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                <StackPanel Grid.Column="0" Spacing="4">
-                                    <TextBlock Text="{Binding Name}" Classes="h3" />
-                                    <TextBlock Text="{Binding Hint}" Classes="dim" TextWrapping="Wrap" />
-                                </StackPanel>
-                                <Border Grid.Column="1" VerticalAlignment="Top" Padding="8,3" CornerRadius="999"
-                                        Background="{Binding Status, Converter={StaticResource StatusBgConverter}}">
-                                    <TextBlock Text="{Binding Status, Converter={StaticResource StatusLabelConverter}}"
-                                               FontSize="10" FontWeight="SemiBold"
-                                               Foreground="{Binding Status, Converter={StaticResource StatusFgConverter}}" />
-                                </Border>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
 
             <!-- Footer -->
             <TextBlock Classes="dim" TextAlignment="Center" Margin="0,12" TextWrapping="Wrap">

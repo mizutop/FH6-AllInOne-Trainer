@@ -26,6 +26,7 @@
             <conv:StatusFgConverter          x:Key="StatusFgConverter" />
             <conv:UpdateFooterColorConverter x:Key="UpdateFooterColorConverter" />
             <conv:HexToBrushConverter        x:Key="HexToBrushConverter" />
+            <conv:NotNullConverter           x:Key="NotNullConverter" />
 
             <!-- Brand accent (Forza-vibe orange-red) -->
             <Color x:Key="AccentColor">#FF6A1F</Color>

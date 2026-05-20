@@ -36,16 +36,28 @@ Latest release: **[GitHub Releases](../../releases/latest)** — grab `FH6AllInO
 - **Race Time Scale** — slow down or speed up race timer (0 = freeze timer)
 
 ### SQL Database (Database Page)
-- **Unlock Everything** — applies all 5 SQL cheats at once (one click)
+- **Unlock Everything** — applies all 9 SQL cheats at once (one click)
 - **Free Cars (LOCK)** — BaseCost stays at 0 forever (re-applied every 10s)
 - **Autoshow All Visible (LOCK)** — every car stays in showroom
 - **Install Flags (LOCK)** — IsInstalled / IsPurchased / IsDrivable stay at 1
 - **Clear NEW Tag** — remove persistent NEW! badges from garage
 - **Add All Cars** — grant every car free (reopen game to claim)
+- **Free Upgrades** — set price=0 on all 47 upgrade tables (engine, turbo, brakes, body kits, rims, etc.)
+- **Free Wheels** — set price=1 (free) on all wheels
+- **Unlock Upgrade Presets** — reveal hidden upgrade preset tunes
+- **Full Autoshow** — recreate Drivable_Data_Car view + fill CarBuckets for complete autoshow
 
 Each LOCK toggle re-applies its SQL every 10 seconds. Backup tables are created automatically — toggling OFF restores originals.
 
-## 🛡️ Safety Features (v3.0.0)
+### Settings & Diagnostics
+- **Accent color picker** — 8 palettes, applies instantly everywhere
+- **UI animations** — toggle stagger entrance, hover lift, pulse, transitions
+- **Mouse hover glow** — soft radial gradient that follows cursor (disable on weak GPUs)
+- **Signature scan** — test all AOB patterns against FH6 binary without installing hooks
+- **Conflict detection** — warns if another trainer (ForzaMods AIO, WeMod, etc.) is running
+- **Profile system** — save/load named cheat configurations to JSON
+
+## 🛡️ Safety Features
 
 - **Toggle locks** — all cheat toggles are disabled when FH6 is not running; red warning banner shown
 - **System tray** — closing the window minimizes to tray instead of quitting; right-click for Show/Exit
@@ -83,9 +95,10 @@ Output: `bin/Release/net10.0-windows/win-x64/publish/FH6AllInOneTrainer.exe`
 |-----|-------------|
 | **[paris' club](https://discord.gg/WSd3bRNJuJ)** | Core cheats: runtime hooks (Credits, Wheelspins, Skill Points, Sell Payout), SQL features (Free Cars, Autoshow, Install Flags, Add All Cars, Clear NEW Tag), CRC bypass, code caves, memory injection |
 | **[ForzaMods](https://github.com/ForzaMods/Forza-Mods-AIO)** | AOB signatures for Freeze AI, Teleport, No Clip, Gravity, No Water Drag, Time of Day, Skill Score Multiplier, Prize Scale, Remove Build Cap, Race Time Scale — [Forza-Mods-AIO](https://github.com/ForzaMods/Forza-Mods-AIO) |
+| **[matkhl](https://github.com/matkhl)** | Free Upgrades SQL (47 upgrade tables), Free Wheels, Upgrade Presets, CarBuckets autoshow — [FH6-DBDUMPER](https://github.com/matkhl/FH6-DBDUMPER) |
 | **[Chaarkor](https://github.com/Chaarkoor)** | Original Avalonia UI shell, MVVM architecture, design system, pattern scanner — [Chaarkors-FH6-Trainer](https://github.com/Chaarkoor/Chaarkors-FH6-Trainer) |
 | **[Reloaded.Memory](https://github.com/Reloaded-Project/Reloaded.Memory.Sigscan)** | SIMD-accelerated AOB scanner |
-| **[changcheng967](https://github.com/changcheng967)** | All-in-one improvements: Quick Start, Max All, Unlock Everything, 10 new cheats, system tray, safety locks, UI redesign, rebrand |
+| **[changcheng967](https://github.com/changcheng967)** | All-in-one improvements: Quick Start, Max All, Unlock Everything, 10 new cheats, 4 new SQL features, system tray, safety locks, profile system, UI redesign, rebrand |
 
 ## 📝 License
 
@@ -93,4 +106,4 @@ GPL-3.0 — source must remain open. See [LICENSE](LICENSE).
 
 ---
 
-**FH6 All-in-One Trainer** · v3.0.0 · 2026 · GPL-3.0 · Solo / Free Roam only
+**FH6 All-in-One Trainer** · v3.1.0 · 2026 · GPL-3.0 · Solo / Free Roam only

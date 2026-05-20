@@ -83,6 +83,21 @@ public sealed class StatusFgConverter : IValueConverter
 /// Parses a hex color string ("#RRGGBB") into a SolidColorBrush. Used by the accent
 /// picker so palette swatches can render their own colour without a code-behind step.
 /// </summary>
+/// <summary>
+/// Returns true if the value is a non-null, non-empty string. Used to toggle
+/// visibility of status blocks only when there is content to show.
+/// </summary>
+public sealed class NotNullConverter : IValueConverter
+{
+    public static readonly NotNullConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is string s && s.Length > 0;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 public sealed class HexToBrushConverter : IValueConverter
 {
     public static readonly HexToBrushConverter Instance = new();

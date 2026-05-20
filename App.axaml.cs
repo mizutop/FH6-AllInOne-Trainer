@@ -72,6 +72,7 @@ public partial class App : Application
         services.AddSingleton<GameProcessService>();
         services.AddSingleton<CheatService>();
         services.AddSingleton<UpdateCheckService>();
+        services.AddSingleton<ProfileService>();
         services.AddSingleton<MainWindowViewModel>();
 
         // Singletons so page state (toggle states, entered values, scroll-ish things)
@@ -88,7 +89,10 @@ public partial class App : Application
         services.AddSingleton<DatabaseViewModel>();
         services.AddSingleton<MiscViewModel>();
         services.AddSingleton<BypassViewModel>();
-        services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<SettingsViewModel>(sp => new SettingsViewModel(
+            sp.GetRequiredService<CheatService>(),
+            sp.GetRequiredService<GameProcessService>(),
+            sp.GetRequiredService<ProfileService>()));
 
         return services.BuildServiceProvider();
     }

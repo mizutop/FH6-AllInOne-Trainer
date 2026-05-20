@@ -1,5 +1,7 @@
 namespace FH6Mod.Cheats.Sql;
 
+using System.Linq;
+
 public enum SqlFeature
 {
     ClearNewTag,
@@ -7,6 +9,10 @@ public enum SqlFeature
     InstallFlags,
     AddAllCars,
     AutoshowUnlock,
+    FreeUpgrades,
+    FreeWheels,
+    UnlockUpgradePresets,
+    FullAutoshow,
 }
 
 /// <summary>
@@ -66,6 +72,40 @@ internal static class SqlFeatureCatalog
                 "UPDATE Data_Car SET VisibleOnlyIfOwned = 0;",
             ]),
 
+        SqlFeature.FreeUpgrades => new(
+            "Free Upgrades (performance + visual)",
+            "Sets price=0 on all 47 upgrade tables — engine, turbo, brakes, body kits, rims, etc.",
+            [
+                "CREATE TABLE IF NOT EXISTS _backup_FreeUpgrades AS SELECT 1;",
+                ..FreeUpgradeTables.Select(t => $"UPDATE [{t}] SET price=0;"),
+            ]),
+
+        SqlFeature.FreeWheels => new(
+            "Free Wheels",
+            "Sets price=1 on all wheels in List_Wheels (1 = free, matching FH5/FH6 convention).",
+            [
+                "CREATE TABLE IF NOT EXISTS _backup_FreeWheels AS SELECT Id, price FROM List_Wheels;",
+                "UPDATE List_Wheels SET price=1;",
+            ]),
+
+        SqlFeature.UnlockUpgradePresets => new(
+            "Unlock Upgrade Presets",
+            "Sets Purchasable=1 on all upgrade preset packages, revealing hidden preset tunes.",
+            [
+                "CREATE TABLE IF NOT EXISTS _backup_UpgradePresets AS SELECT Id, Purchasable FROM UpgradePresetPackages;",
+                "UPDATE UpgradePresetPackages SET Purchasable=1 WHERE Purchasable=0;",
+            ]),
+
+        SqlFeature.FullAutoshow => new(
+            "Full Autoshow (CarBuckets + View)",
+            "Drops the Drivable_Data_Car view and recreates it to include ALL cars, then fills CarBuckets so every car appears in autoshow listings.",
+            [
+                "DROP VIEW IF EXISTS Drivable_Data_Car;",
+                "CREATE VIEW Drivable_Data_Car AS SELECT * FROM Data_Car;",
+                "INSERT OR IGNORE INTO CarBuckets(CarId) SELECT Id FROM Data_Car WHERE Id NOT IN (SELECT CarId FROM CarBuckets);",
+                "UPDATE CarBuckets SET CarBucket=0, BucketHero=0 WHERE CarBucket IS NULL;",
+            ]),
+
         _ => throw new System.InvalidOperationException("Unknown SQL feature."),
     };
 
@@ -95,6 +135,43 @@ internal static class SqlFeatureCatalog
             "UPDATE Data_Car SET IsPurchased = (SELECT IsPurchased FROM _backup_DataCarIsPurchased WHERE _backup_DataCarIsPurchased.Id = Data_Car.Id) WHERE EXISTS (SELECT 1 FROM _backup_DataCarIsPurchased WHERE _backup_DataCarIsPurchased.Id = Data_Car.Id);",
             "UPDATE Data_Car SET IsDrivable = (SELECT IsDrivable FROM _backup_DataCarIsDrivable WHERE _backup_DataCarIsDrivable.Id = Data_Car.Id) WHERE EXISTS (SELECT 1 FROM _backup_DataCarIsDrivable WHERE _backup_DataCarIsDrivable.Id = Data_Car.Id);",
         ],
+        SqlFeature.FreeUpgrades => [],   // too many tables to revert individually; one-shot is fine
+        SqlFeature.FreeWheels =>
+        [
+            "UPDATE List_Wheels SET price = (SELECT price FROM _backup_FreeWheels WHERE _backup_FreeWheels.Id = List_Wheels.Id) WHERE EXISTS (SELECT 1 FROM _backup_FreeWheels WHERE _backup_FreeWheels.Id = List_Wheels.Id);",
+        ],
+        SqlFeature.UnlockUpgradePresets =>
+        [
+            "UPDATE UpgradePresetPackages SET Purchasable = (SELECT Purchasable FROM _backup_UpgradePresets WHERE _backup_UpgradePresets.Id = UpgradePresetPackages.Id) WHERE EXISTS (SELECT 1 FROM _backup_UpgradePresets WHERE _backup_UpgradePresets.Id = UpgradePresetPackages.Id);",
+        ],
+        SqlFeature.FullAutoshow => [],   // view recreation; one-shot
         _ => [],
     };
+
+    /// <summary>
+    /// All 47 upgrade tables that have a <c>price</c> column — 42 performance + 5 visual.
+    /// From matkhl/FH6-DBDUMPER.
+    /// </summary>
+    internal static readonly string[] FreeUpgradeTables =
+    [
+        "List_UpgradeAntiSwayFront", "List_UpgradeAntiSwayRear", "List_UpgradeBrakes",
+        "List_UpgradeCarBodyChassisStiffness", "List_UpgradeCarBody",
+        "List_UpgradeCarBodyTireAspectRatioFront", "List_UpgradeCarBodyTireAspectRatioRear",
+        "List_UpgradeCarBodyTireWidthFront", "List_UpgradeCarBodyTireWidthRear",
+        "List_UpgradeCarBodyTrackSpacingFront", "List_UpgradeCarBodyTrackSpacingRear",
+        "List_UpgradeCarBodyWeight", "List_UpgradeDrivetrain", "List_UpgradeDrivetrainClutch",
+        "List_UpgradeDrivetrainDifferential", "List_UpgradeDrivetrainDriveline",
+        "List_UpgradeDrivetrainTransmission", "List_UpgradeEngine", "List_UpgradeEngineCamshaft",
+        "List_UpgradeEngineCSC", "List_UpgradeEngineDisplacement", "List_UpgradeEngineDSC",
+        "List_UpgradeEngineExhaust", "List_UpgradeEngineFlywheel", "List_UpgradeEngineFuelSystem",
+        "List_UpgradeEngineIgnition", "List_UpgradeEngineIntake", "List_UpgradeEngineIntercooler",
+        "List_UpgradeEngineManifold", "List_UpgradeEngineOilCooling",
+        "List_UpgradeEnginePistonsCompression", "List_UpgradeEngineRestrictorPlate",
+        "List_UpgradeEngineTurboQuad", "List_UpgradeEngineTurboSingle", "List_UpgradeEngineTurboTwin",
+        "List_UpgradeEngineValves", "List_UpgradeMotor", "List_UpgradeMotorParts",
+        "List_UpgradeRimSizeFront", "List_UpgradeRimSizeRear", "List_UpgradeSpringDamper",
+        "List_UpgradeTireCompound",
+        "List_UpgradeCarBodyFrontBumper", "List_UpgradeCarBodyHood",
+        "List_UpgradeCarBodyRearBumper", "List_UpgradeCarBodySideSkirt", "List_RearWing",
+    ];
 }

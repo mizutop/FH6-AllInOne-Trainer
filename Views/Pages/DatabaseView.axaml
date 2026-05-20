@@ -112,6 +112,38 @@
                         Command="{Binding AddAllCarsCommand}" />
             </Grid>
 
+            <!-- Free Upgrades -->
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+                <TextBlock Grid.Column="0" Text="Free Upgrades (47 tables)" VerticalAlignment="Center" FontSize="13" />
+                <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
+                        HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
+                        Command="{Binding FreeUpgradesCommand}" />
+            </Grid>
+
+            <!-- Free Wheels -->
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+                <TextBlock Grid.Column="0" Text="Free Wheels" VerticalAlignment="Center" FontSize="13" />
+                <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
+                        HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
+                        Command="{Binding FreeWheelsCommand}" />
+            </Grid>
+
+            <!-- Unlock Upgrade Presets -->
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+                <TextBlock Grid.Column="0" Text="Unlock Upgrade Presets" VerticalAlignment="Center" FontSize="13" />
+                <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
+                        HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
+                        Command="{Binding UnlockPresetsCommand}" />
+            </Grid>
+
+            <!-- Full Autoshow (CarBuckets) -->
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+                <TextBlock Grid.Column="0" Text="Full Autoshow (CarBuckets)" VerticalAlignment="Center" FontSize="13" />
+                <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
+                        HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
+                        Command="{Binding FullAutoshowCommand}" />
+            </Grid>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

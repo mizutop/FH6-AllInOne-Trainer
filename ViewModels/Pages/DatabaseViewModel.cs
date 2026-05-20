@@ -76,11 +76,15 @@ public partial class DatabaseViewModel : PageViewModelBase
         TryRun(SqlFeature.AutoshowUnlock, "Autoshow Unlock");
         TryRun(SqlFeature.ClearNewTag, "Clear NEW Tags");
         TryRun(SqlFeature.AddAllCars, "Add All Cars");
+        TryRun(SqlFeature.FreeUpgrades, "Free Upgrades");
+        TryRun(SqlFeature.FreeWheels, "Free Wheels");
+        TryRun(SqlFeature.UnlockUpgradePresets, "Upgrade Presets");
+        TryRun(SqlFeature.FullAutoshow, "Full Autoshow");
 
         DiagnosticsMessage = _cheats.Diagnostics;
         StatusIsError = errors.Count > 0;
         StatusMessage = errors.Count == 0
-            ? $"Unlock Everything applied — {string.Join(", ", labels)}. All cars free, visible, and in garage."
+            ? $"Unlock Everything applied — {string.Join(", ", labels)}. All cars free, visible, in garage, free upgrades & wheels."
             : $"Partially applied. Failed: {string.Join(", ", errors)}";
     }
 
@@ -89,6 +93,10 @@ public partial class DatabaseViewModel : PageViewModelBase
     [RelayCommand] private void InstallFlags()    => Run(SqlFeature.InstallFlags,    "Install flags");
     [RelayCommand] private void AddAllCars()      => Run(SqlFeature.AddAllCars,      "Add All Cars grant");
     [RelayCommand] private void AutoshowUnlock()  => Run(SqlFeature.AutoshowUnlock,  "Autoshow visibility");
+    [RelayCommand] private void FreeUpgrades()    => Run(SqlFeature.FreeUpgrades,    "Free upgrades (47 tables)");
+    [RelayCommand] private void FreeWheels()      => Run(SqlFeature.FreeWheels,      "Free wheels");
+    [RelayCommand] private void UnlockPresets()   => Run(SqlFeature.UnlockUpgradePresets, "Upgrade presets");
+    [RelayCommand] private void FullAutoshow()    => Run(SqlFeature.FullAutoshow,    "Full autoshow (CarBuckets)");
 
     [RelayCommand]
     private void ToggleFreeCarsLock()
