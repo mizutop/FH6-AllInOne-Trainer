@@ -33,7 +33,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosing(WindowClosingEventArgs e)
     {
-        if (!AllowExit)
+        if (!AllowExit && _trayIcon is not null)
         {
             e.Cancel = true;
             Hide();
@@ -45,25 +45,30 @@ public partial class MainWindow : Window
 
     private void InitTray()
     {
-        var showCmd = new RelayCommand(() => Dispatcher.UIThread.Post(() =>
+        try
         {
-            Show();
-            WindowState = WindowState.Normal;
-            Activate();
-        }));
-        var exitCmd = new RelayCommand(() =>
-        {
-            AllowExit = true;
-            Dispatcher.UIThread.Post(() => Close());
-        });
+            var showCmd = new RelayCommand(() => Dispatcher.UIThread.Post(() =>
+            {
+                Show();
+                WindowState = WindowState.Normal;
+                Activate();
+            }));
+            var exitCmd = new RelayCommand(() =>
+            {
+                AllowExit = true;
+                Dispatcher.UIThread.Post(() => Close());
+            });
 
-        _trayIcon = new TrayIcon
-        {
-            Icon = new WindowIcon("/Assets/logo.png"),
-            ToolTipText = "FH6 All-in-One Trainer",
-            Menu = CreateTrayMenu(showCmd, exitCmd),
-            IsVisible = true,
-        };
+            _trayIcon = new TrayIcon
+            {
+                ToolTipText = "FH6 All-in-One Trainer",
+                Menu = CreateTrayMenu(showCmd, exitCmd),
+                IsVisible = true,
+            };
+            try { _trayIcon.Icon = new WindowIcon("/Assets/logo.png"); }
+            catch { /* icon format not supported — tray still works without icon */ }
+        }
+        catch { /* tray not available — window still works normally */ }
     }
 
     private NativeMenu CreateTrayMenu(ICommand show, ICommand exit)
