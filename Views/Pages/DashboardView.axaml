@@ -100,7 +100,7 @@
                                    Text="Credits" />
                         <TextBlock TextWrapping="Wrap" FontSize="13"
                                    Foreground="{DynamicResource TextPrimary}"
-                                   Text="Core cheats by paris' club (Autoshow Unlocker). UI originally by Chaarkor. Improved and maintained by the community. Check the Settings tab for theme customization." />
+                                   Text="Core cheats by paris' club (Autoshow Unlocker). Original UI shell by Chaarkor. All-in-one improvements by changcheng967. Check the Settings tab for theme customization." />
                     </StackPanel>
                 </Grid>
             </Border>

@@ -105,8 +105,8 @@
                     <Border Grid.Row="1" Padding="0,12,0,16">
                         <StackPanel Spacing="6">
                             <StackPanel Margin="16,0" Spacing="4">
-                                <TextBlock Text="EARLY ACCESS" Classes="eyebrow" />
-                                <TextBlock Text="UI scaffold — features wiring in progress."
+                                <TextBlock Text="FH6 ALL-IN-ONE TRAINER" Classes="eyebrow" />
+                                <TextBlock Text="Credits, wheelspins, skill points, free cars."
                                            Classes="dim" TextWrapping="Wrap" />
                             </StackPanel>
 

@@ -7,7 +7,7 @@ namespace FH6Mod.Views;
 
 public partial class UpdateDialog : Window
 {
-    public UpdateDialog() : this("vX.Y.Z", "v0.0.0", "https://github.com/Chaarkoor/Chaarkors-FH6-Trainer/releases") { }
+    public UpdateDialog() : this("vX.Y.Z", "v0.0.0", "https://github.com/changcheng967/FH6-AllInOne-Trainer/releases") { }
 
     public UpdateDialog(string latestTag, string currentVersion, string releasesUrl)
     {
@@ -18,7 +18,7 @@ public partial class UpdateDialog : Window
         _releasesUrl = releasesUrl;
     }
 
-    private readonly string _releasesUrl = "https://github.com/Chaarkoor/Chaarkors-FH6-Trainer/releases";
+    private readonly string _releasesUrl = "https://github.com/changcheng967/FH6-AllInOne-Trainer/releases";
 
     private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
 

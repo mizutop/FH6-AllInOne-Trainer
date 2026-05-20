@@ -29,7 +29,7 @@
 
             <!-- Body -->
             <TextBlock TextWrapping="Wrap" Classes="subtle"
-                       Text="You're running an older build of Chaarkor's FH6 Trainer. A newer release is published on GitHub — grab it for the latest fixes, signatures, and features. You can ignore this and keep using the current build if you want." />
+                       Text="A newer release of FH6 All-in-One Trainer is available on GitHub — grab it for the latest fixes, signatures, and features. You can ignore this and keep using the current build if you want." />
 
             <!-- Buttons -->
             <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,4,0,0" ColumnSpacing="10">
