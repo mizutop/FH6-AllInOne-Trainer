@@ -15,9 +15,9 @@ public sealed class GameProcessService : IDisposable
     // Known trainer process names to detect conflicts
     private static readonly HashSet<string> KnownTrainers = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Forza-Mods-AIO", "ForzaModsAIO", "Chaarkors-FH6-Trainer", "ChaarkorsFH6Mod",
-        "AutoshowUnlocker", "FH6AutoshowUnlocker", "FH6Trainer",
-        "flingtrainer", "trainer", "WeMod", "infinitytrainer",
+        "Forza-Mods-AIO", "ForzaModsAIO",
+        "AutoshowUnlocker", "FH6AutoshowUnlocker",
+        "flingtrainer", "WeMod", "infinitytrainer",
     };
 
     private readonly Timer _poll;
@@ -68,12 +68,14 @@ public sealed class GameProcessService : IDisposable
     public List<string> DetectConflictingTrainers()
     {
         var conflicts = new List<string>();
+        var ownPid = Environment.ProcessId;
         try
         {
             foreach (var proc in Process.GetProcesses())
             {
                 try
                 {
+                    if (proc.Id == ownPid) continue;
                     var name = proc.ProcessName;
                     if (KnownTrainers.Any(t => name.Contains(t, StringComparison.OrdinalIgnoreCase)))
                         conflicts.Add($"{name} (PID {proc.Id})");

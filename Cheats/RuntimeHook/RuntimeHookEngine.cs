@@ -68,9 +68,10 @@ public sealed class RuntimeHookEngine : IDisposable
             try
             {
                 var desc = ProfileFeatureCatalog.Get(f);
+                var brokenPrefix = desc.BrokenNote is not null ? $"[BROKEN: {desc.BrokenNote}] " : "";
                 var pattern = Pattern.Parse(desc.Signature);
                 bool found = false;
-                string detail = "Signature not found";
+                string detail = $"{brokenPrefix}Signature not found";
 
                 foreach (var off in Pattern.FindAll(moduleBytes, pattern, 128))
                 {
@@ -91,15 +92,22 @@ public sealed class RuntimeHookEngine : IDisposable
                     var original = ReadBytes(hookAddr, desc.HookSize);
                     if (original.Length < desc.HookSize) continue;
 
-                    if (BytesStartWith(original, desc.ExpectedOriginal))
+                    if (original.Length > 0 && original[0] == 0xE9)
                     {
-                        found = true;
-                        detail = $"Match @ 0x{hookAddr:X}";
-                        break;
+                        detail = "Already patched by another tool";
+                        continue;
                     }
 
-                    if (original.Length > 0 && original[0] == 0xE9)
-                        detail = "Already patched by another tool";
+                    found = true;
+                    if (BytesStartWith(original, desc.ExpectedOriginal))
+                    {
+                        detail = $"{brokenPrefix}Match @ 0x{hookAddr:X} (exact)";
+                    }
+                    else
+                    {
+                        detail = $"{brokenPrefix}Match @ 0x{hookAddr:X} (dynamic — bytes: {FormatBytes(original)})";
+                    }
+                    break;
                 }
 
                 results.Add((f, found, detail));
@@ -267,6 +275,11 @@ public sealed class RuntimeHookEngine : IDisposable
         error = null;
         if (!IsAttached) { error = "Not attached."; return false; }
         var desc = ProfileFeatureCatalog.Get(feature);
+        if (desc.BrokenNote is not null)
+        {
+            error = $"{desc.Name} is disabled: {desc.BrokenNote}";
+            return false;
+        }
         try
         {
             RuntimeDetour det;
@@ -303,6 +316,11 @@ public sealed class RuntimeHookEngine : IDisposable
     {
         error = null;
         var desc = ProfileFeatureCatalog.Get(feature);
+        if (desc.BrokenNote is not null)
+        {
+            error = $"{desc.Name} is disabled: {desc.BrokenNote}";
+            return false;
+        }
         lock (_lock)
         {
             if (!_hooks.TryGetValue(desc.Key, out var det))
@@ -347,13 +365,11 @@ public sealed class RuntimeHookEngine : IDisposable
     }
 
     /// <summary>
-    /// Multi-candidate signature resolver — ported from autoshow v1.4.1.
-    /// Instead of trusting the first pattern hit (which can be a false positive
-    /// when Turn 10 ships a binary update that accidentally matches our signature
-    /// elsewhere), we walk up to 128 matches and pick the first one whose target
-    /// bytes match <see cref="RuntimeProfileHookDescriptor.ExpectedOriginal"/>.
-    /// On total failure we report the most informative error we can: either
-    /// "signature missing", "already patched", or "bytes mismatch with sample".
+    /// Multi-candidate signature resolver.
+    /// Walks up to 128 pattern matches and picks the best candidate:
+    ///  1. Exact match (bytes == ExpectedOriginal) — preferred
+    ///  2. Any non-patched candidate — accepted with dynamic byte patching
+    /// This means game updates that shift register/offset encodings won't break cheats.
     /// </summary>
     private ulong FindProfileHookTarget(byte[] moduleBytes, RuntimeProfileHookDescriptor desc)
     {
@@ -361,6 +377,7 @@ public sealed class RuntimeHookEngine : IDisposable
         bool anyMatchFound = false;
         bool anyTargetPatched = false;
         string firstMismatchSample = string.Empty;
+        ulong? dynamicCandidate = null;
 
         foreach (var off in Pattern.FindAll(moduleBytes, pattern, 128))
         {
@@ -371,7 +388,6 @@ public sealed class RuntimeHookEngine : IDisposable
             {
                 var callAddr = _mainBase + (ulong)off;
                 var head = ReadBytes(callAddr, 5);
-                // Not a CALL → wrong candidate, try the next one
                 if (head.Length < 5 || head[0] != 0xE8) continue;
                 var rel = BitConverter.ToInt32(head, 1);
                 hookAddr = (ulong)((long)(callAddr + 5) + rel + desc.CallTargetOffset);
@@ -384,35 +400,62 @@ public sealed class RuntimeHookEngine : IDisposable
             var original = ReadBytes(hookAddr, desc.HookSize);
             if (original.Length < desc.HookSize) continue;
 
+            // Best case: exact match
             if (BytesStartWith(original, desc.ExpectedOriginal))
-                return hookAddr; // found a valid candidate — done
+                return hookAddr;
 
+            // Track already-patched targets
             if (original.Length > 0 && original[0] == 0xE9)
+            {
                 anyTargetPatched = true;
+                continue;
+            }
+
+            // Accept first non-patched candidate for dynamic patching
+            dynamicCandidate ??= hookAddr;
 
             if (string.IsNullOrEmpty(firstMismatchSample))
-                firstMismatchSample = FormatBytes(original);
+                firstMismatchSample = $"expected {FormatBytes(desc.ExpectedOriginal)}, got {FormatBytes(original)}";
+        }
+
+        if (dynamicCandidate.HasValue)
+        {
+            L($"{desc.Name}: ExpectedOriginal mismatch — using dynamic byte patching. {firstMismatchSample}");
+            return dynamicCandidate.Value;
         }
 
         if (!anyMatchFound)
             throw new InvalidOperationException($"{desc.Name} signature was not found.\nSig: {desc.Signature}");
         if (anyTargetPatched)
             throw new InvalidOperationException($"{desc.Name} hook target already patched by another tool. Close other trainers and retry.");
-        throw new InvalidOperationException($"{desc.Name} hook target bytes mismatch (FH6 may have updated). Found: {firstMismatchSample}");
+        throw new InvalidOperationException($"{desc.Name} hook target bytes mismatch (FH6 may have updated). {firstMismatchSample}");
     }
 
     private RuntimeDetour CreateRuntimeDetour(RuntimeProfileHookDescriptor desc, ulong hookAddr)
     {
         var original = ReadBytes(hookAddr, desc.HookSize);
+
+        // Dynamically patch the Asm template with actual bytes read from the hook target.
+        // This makes cheats resilient to game updates that change register/offset encodings.
+        var patchedAsm = (byte[])desc.Asm.Clone();
+        foreach (var (asmOffset, origOffset, length) in desc.OriginalRegions)
+        {
+            if (asmOffset + length <= patchedAsm.Length && origOffset + length <= original.Length)
+            {
+                for (var i = 0; i < length; i++)
+                    patchedAsm[asmOffset + i] = original[origOffset + i];
+            }
+        }
+
         var caveSize = Math.Max(
-            desc.Asm.Length + 5,
+            patchedAsm.Length + 5,
             Math.Max(desc.ToggleOffset + 1, desc.ValueOffset >= 0 ? desc.ValueOffset + 4 : 0));
 
         var caveAddr = AllocateNear(hookAddr, caveSize);
         var cave = new byte[caveSize];
-        Buffer.BlockCopy(desc.Asm, 0, cave, 0, desc.Asm.Length);
-        var jmpBack = BuildRelativeJump(caveAddr + (ulong)desc.Asm.Length, hookAddr + (ulong)desc.HookSize, 5);
-        Buffer.BlockCopy(jmpBack, 0, cave, desc.Asm.Length, jmpBack.Length);
+        Buffer.BlockCopy(patchedAsm, 0, cave, 0, patchedAsm.Length);
+        var jmpBack = BuildRelativeJump(caveAddr + (ulong)patchedAsm.Length, hookAddr + (ulong)desc.HookSize, 5);
+        Buffer.BlockCopy(jmpBack, 0, cave, patchedAsm.Length, jmpBack.Length);
         WriteBytes(caveAddr, cave);
 
         var hookPatch = BuildRelativeJump(hookAddr, caveAddr, desc.HookSize);

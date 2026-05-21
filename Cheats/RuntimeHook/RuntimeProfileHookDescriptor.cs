@@ -42,8 +42,17 @@ internal sealed class RuntimeProfileHookDescriptor
     public int HookSize;
     public byte[] Asm = [];
     public byte[] ExpectedOriginal = [];
+    /// <summary>
+    /// Maps positions within <see cref="Asm"/> to actual runtime bytes read from the hook target.
+    /// Each tuple: (asmIndex, originalByteIndex, length).
+    /// At hook time the engine reads HookSize bytes from the match and copies each segment
+    /// into the Asm template — so register/offset changes from game updates are handled automatically.
+    /// </summary>
+    public (int AsmOffset, int OrigOffset, int Length)[] OriginalRegions = [];
     public int ToggleOffset;
     public int ValueOffset = -1;
+    /// <summary>Non-null means this cheat hooks the wrong function in FH6 — do not install.</summary>
+    public string? BrokenNote;
 }
 
 internal sealed class RuntimeDetour
@@ -78,6 +87,7 @@ internal static class ProfileFeatureCatalog
                 66, 180, 117, 8, 139, 21, 10, 0, 0, 0,
                 137, 23, 49, 210,
             ],
+            OriginalRegions = [(0, 0, 4), (42, 4, 2)],
         },
         RuntimeProfileFeature.Wheelspins => new()
         {
@@ -92,6 +102,7 @@ internal static class ProfileFeatureCatalog
                 21, 14, 0, 0, 0, 137, 87, 8, 51, 210,
                 139, 95, 8,
             ],
+            OriginalRegions = [(18, 0, 5)],
         },
         RuntimeProfileFeature.SuperWheelspins => new()
         {
@@ -106,6 +117,7 @@ internal static class ProfileFeatureCatalog
                 21, 14, 0, 0, 0, 137, 87, 16, 51, 210,
                 139, 95, 16,
             ],
+            OriginalRegions = [(18, 0, 5)],
         },
         RuntimeProfileFeature.SkillPoints => new()
         {
@@ -119,6 +131,7 @@ internal static class ProfileFeatureCatalog
                 128, 61, 18, 0, 0, 0, 1, 117, 6, 139,
                 29, 11, 0, 0, 0, 51, 210, 137, 95, 64,
             ],
+            OriginalRegions = [(15, 0, 5)],
         },
         RuntimeProfileFeature.DriftScoreMultiplier => new()
         {
@@ -133,6 +146,7 @@ internal static class ProfileFeatureCatalog
                 15, 89, 61, 15, 0, 0, 0, 243, 15, 88,
                 247, 15, 40, 124, 36, 32,
             ],
+            OriginalRegions = [(17, 0, 9)],
         },
         RuntimeProfileFeature.NoSkillBreak => new()
         {
@@ -147,6 +161,7 @@ internal static class ProfileFeatureCatalog
                 192, 15, 182, 240, 64, 56, 171, 116, 2, 0,
                 0,
             ],
+            OriginalRegions = [(11, 0, 10)],
         },
         RuntimeProfileFeature.SellFactor => new()
         {
@@ -161,114 +176,123 @@ internal static class ProfileFeatureCatalog
                 0, 0, 0, 1, 117, 7, 68, 139, 53, 6,
                 0, 0, 0,
             ],
+            OriginalRegions = [(0, 0, 7)],
         },
 
         // ===== NEW CHEATS (ForzaMods AIO signatures) =====
+        // ALL 14 below hook WRONG FUNCTIONS in current FH6 build.
+        // Signatures match, but target unrelated code — not the intended cheat effect.
+        // Marked broken until we RE the correct functions ourselves.
 
         // Freeze AI: zeroes AI car velocity X/Y/Z when not the local player
-        // Original: F3 0F 58 81 54 01 00 00  (addss xmm0, [rcx+154h])
+        // RE confirmed: hooks a ratio/progress calculator, NOT AI velocity
         RuntimeProfileFeature.FreezeAI => new()
         {
+            BrokenNote = "Hooks wrong function (ratio calculator, not AI velocity)",
             Key = "FreezeAI", Name = "Freeze AI",
             Signature = "F3 0F ? ? ? ? ? ? F3 0F ? ? F3 0F ? ? 0F 57 ? F3 0F ? ? ? ? ? ? F3 0F ? ? C3",
             MatchOffset = 0, HookSize = 8,
-            ExpectedOriginal = [243, 15, 88, 129, 84, 1, 0, 0],
-            ToggleOffset = 18, ValueOffset = -1,
+            ExpectedOriginal = [243, 15, 88, 129, 92, 1, 0, 0],
+            ToggleOffset = 25, ValueOffset = -1,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 14, 0, 0, 0, 1,
-                // jne skip
-                117, 9,
+                // cmp byte [rip+18], 1 → toggle at Asm+5=25
+                128, 61, 18, 0, 0, 0, 1,
+                // jne +3 → skip xorps to original
+                117, 3,
                 // xorps xmm0,xmm0 ; zero velocity
                 15, 87, 192,
-                // addss xmm0,[rcx+154h] (original)
-                243, 15, 88, 129, 84, 1, 0, 0,
+                // addss xmm0,[rcx+15Ch] (original)
+                243, 15, 88, 129, 92, 1, 0, 0,
             ],
+            OriginalRegions = [(12, 0, 8)],
         },
 
         // Teleport to waypoint: reads waypoint coords from rdi+0x230, writes to player pos
         // Confirmed FH6 match: 0F 10 8B 30 02 00 00 (movups xmm1,[rbx+230h])
         RuntimeProfileFeature.Teleport => new()
         {
-            Key = "Teleport", Name = "Teleport to Waypoint",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "0F 10 8B 30 02 00 00 0F 11 8F 30 02 00 00",
             MatchOffset = 0, HookSize = 7,
             ExpectedOriginal = [15, 16, 139, 48, 2, 0, 0],
-            ToggleOffset = 16, ValueOffset = -1,
+            ToggleOffset = 24, ValueOffset = -1,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 13, 0, 0, 0, 1,
-                // jne skip
-                117, 2,
+                // cmp byte [rip+17], 1 → toggle at Asm+5=24
+                128, 61, 17, 0, 0, 0, 1,
+                // jne +3 → skip xorps to original
+                117, 3,
                 // xorps xmm1,xmm1 ; zero = teleport marker
                 15, 87, 201,
                 // movups xmm1,[rbx+230h] (original)
                 15, 16, 139, 48, 2, 0, 0,
             ],
+            OriginalRegions = [(12, 0, 7)],
         },
 
         // No Clip: skip collision processing for local player
-        // Original: 48 8B C4 4C 89 48 20 56 41 57 41
+        // Original: 48 8B C4 4C 89 40 18 56 41 57 41
         RuntimeProfileFeature.NoClip => new()
         {
-            Key = "NoClip", Name = "No Clip",
+            BrokenNote = "Hooks wrong function (string/hash compare, not collision)",
             Signature = "48 8B ? 4C 89 ? ? 56 41 ? 41",
             MatchOffset = 0, HookSize = 7,
             ExpectedOriginal = [72, 139, 196, 76, 137, 72, 32],
-            ToggleOffset = 18, ValueOffset = -1,
+            ToggleOffset = 25, ValueOffset = -1,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 14, 0, 0, 0, 1,
-                // jne skip
+                // cmp byte [rip+18], 1 → toggle at Asm+5=25
+                128, 61, 18, 0, 0, 0, 1,
+                // jne +3 → skip ret+nops to original
                 117, 3,
                 // ret (skip collision)
                 195,
                 // nop padding
                 144, 144, 144,
-                // original: mov rax,rsp; mov [rax+20],r9
-                72, 139, 196, 76, 137, 72, 32,
+                // original: mov rax,rsp; mov [rax+18h],r9
+                72, 139, 196, 76, 137, 64, 24,
             ],
+            OriginalRegions = [(13, 0, 7)],
         },
 
         // Gravity Multiplier: multiply gravity on player car
-        // Original: F3 0F 59 4B 08  (mulss xmm1,[rbx+8])
+        // Original: F3 0F 59 73 08  (mulss xmm1,[rbx+8])
         RuntimeProfileFeature.GravityMultiplier => new()
         {
-            Key = "GravityMultiplier", Name = "Gravity Multiplier",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "F3 0F ? ? ? F3 0F ? ? ? ? ? ? F3 0F ? ? ? ? ? ? 45 84 ? 74",
             MatchOffset = 0, HookSize = 5,
             ExpectedOriginal = [243, 15, 89, 75, 8],
-            ToggleOffset = 14, ValueOffset = 15,
+            ToggleOffset = 27, ValueOffset = 28,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 11, 0, 0, 0, 1,
-                // jne skip
-                117, 3,
-                // mulss xmm1,[value] (custom gravity)
-                243, 15, 89, 13, 2, 0, 0, 0,
+                // cmp byte [rip+20], 1 → toggle at Asm+5=27
+                128, 61, 20, 0, 0, 0, 1,
+                // jne +8 → skip custom mulss to original
+                117, 8,
+                // mulss xmm1,[rip+11] → value at Asm+6=28
+                243, 15, 89, 13, 11, 0, 0, 0,
                 // mulss xmm1,[rbx+8] (original)
                 243, 15, 89, 75, 8,
             ],
+            OriginalRegions = [(17, 0, 5)],
         },
 
         // No Water Drag: return early from water drag function
         // Original: 48 8B C4 F3 0F 11 48 10
         RuntimeProfileFeature.NoWaterDrag => new()
         {
-            Key = "NoWaterDrag", Name = "No Water Drag",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "48 8B ? F3 0F ? ? ? 53 55",
             MatchOffset = 0, HookSize = 8,
             ExpectedOriginal = [72, 139, 196, 243, 15, 17, 72, 16],
-            ToggleOffset = 20, ValueOffset = -1,
+            ToggleOffset = 28, ValueOffset = -1,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 16, 0, 0, 0, 1,
-                // jne skip
+                // cmp byte [rip+21], 1 → toggle at Asm+5=28
+                128, 61, 21, 0, 0, 0, 1,
+                // jne +3 → skip ret+nops to original
                 117, 3,
                 // ret
                 195,
@@ -277,206 +301,207 @@ internal static class ProfileFeatureCatalog
                 // original
                 72, 139, 196, 243, 15, 17, 72, 16,
             ],
+            OriginalRegions = [(15, 0, 8)],
         },
 
         // Time of Day: override time float at rbx+8
         // Original: F2 0F 11 43 08  (movsd [rbx+8],xmm0)
-        // Signature found at result+6, HookSize=5
         RuntimeProfileFeature.TimeOfDay => new()
         {
-            Key = "TimeOfDay", Name = "Time of Day",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "44 0F ? ? ? ? F2 0F ? ? ? 48 83 C4",
             MatchOffset = 6, HookSize = 5,
             ExpectedOriginal = [242, 15, 17, 67, 8],
-            ToggleOffset = 14, ValueOffset = 15,
+            ToggleOffset = 27, ValueOffset = 28,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 11, 0, 0, 0, 1,
-                // jne skip
-                117, 3,
-                // movsd xmm0,[value]
-                242, 15, 16, 5, 2, 0, 0, 0,
+                // cmp byte [rip+20], 1 → toggle at Asm+5=27
+                128, 61, 20, 0, 0, 0, 1,
+                // jne +8 → skip movsd to original
+                117, 8,
+                // movsd xmm0,[rip+11] → value at Asm+6=28
+                242, 15, 16, 5, 11, 0, 0, 0,
                 // movsd [rbx+8],xmm0 (original)
                 242, 15, 17, 67, 8,
             ],
+            OriginalRegions = [(17, 0, 5)],
         },
 
         // Skill Score Multiplier: imul earned skill score by multiplier
-        // Confirmed FH6 match near: 8B 78 08 48 8B 18 48 3B DF
         RuntimeProfileFeature.SkillScoreMultiplier => new()
         {
-            Key = "SkillScoreMultiplier", Name = "Skill Score Multiplier",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "8B 78 08 48 8B 18 48 3B DF",
             MatchOffset = 0, HookSize = 7,
             ExpectedOriginal = [139, 120, 8, 72, 139, 77, 96],
-            ToggleOffset = 19, ValueOffset = 20,
+            ToggleOffset = 30, ValueOffset = 31,
             Asm =
             [
                 // mov edi,[rax+8] (original first instr)
                 139, 120, 8,
-                // cmp [toggle], 1
-                128, 61, 12, 0, 0, 0, 1,
-                // jne skip
-                117, 6,
-                // imul edi,[value]
-                139, 13, 2, 0, 0, 0, 15, 175, 255,
+                // cmp byte [rip+20], 1 → toggle at Asm+5=30
+                128, 61, 20, 0, 0, 0, 1,
+                // jne +9 → skip cheat code to original suffix
+                117, 9,
+                // mov ecx,[rip+13] → value at Asm+6=31
+                139, 13, 13, 0, 0, 0,
+                // imul edi,edi
+                15, 175, 255,
                 // mov rcx,[rbp+60h] (original second instr)
                 72, 139, 77, 96,
             ],
+            OriginalRegions = [(0, 0, 3), (21, 3, 4)],
         },
 
         // Prize Scale: multiply wheelspin reward float
-        // Confirmed FH6 match: F3 0F 10 73 10 (movss xmm6,[rbx+10h])
         RuntimeProfileFeature.PrizeScale => new()
         {
-            Key = "PrizeScale", Name = "Prize Scale",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "F3 0F 10 73 10 44 0F 29 40",
             MatchOffset = 0, HookSize = 5,
             ExpectedOriginal = [243, 15, 16, 115, 16],
-            ToggleOffset = 14, ValueOffset = 15,
+            ToggleOffset = 27, ValueOffset = 28,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 11, 0, 0, 0, 1,
-                // jne skip
-                117, 3,
-                // movss xmm6,[value]
-                243, 15, 16, 53, 2, 0, 0, 0,
+                // cmp byte [rip+20], 1 → toggle at Asm+5=27
+                128, 61, 20, 0, 0, 0, 1,
+                // jne +8 → skip movss to original
+                117, 8,
+                // movss xmm6,[rip+11] → value at Asm+6=28
+                243, 15, 16, 53, 11, 0, 0, 0,
                 // movss xmm6,[rbx+10h] (original)
                 243, 15, 16, 115, 16,
             ],
+            OriginalRegions = [(17, 0, 5)],
         },
 
         // Remove Build Cap: zero out the engine swap/build power cap
-        // Signature at result+5, Original: F3 0F 11 43 44 (movss [rbx+44h],xmm0)
         RuntimeProfileFeature.RemoveBuildCap => new()
         {
-            Key = "RemoveBuildCap", Name = "Remove Build Cap",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "E8 ? ? ? ? F3 0F ? ? ? 48 8B ? ? ? 48 8B",
             MatchOffset = 5, HookSize = 5,
             ExpectedOriginal = [243, 15, 17, 67, 68],
-            ToggleOffset = 14, ValueOffset = -1,
+            ToggleOffset = 22, ValueOffset = -1,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 11, 0, 0, 0, 1,
-                // jne skip
+                // cmp byte [rip+15], 1 → toggle at Asm+5=22
+                128, 61, 15, 0, 0, 0, 1,
+                // jne +3 → skip xorps to original
                 117, 3,
                 // xorps xmm0,xmm0 (zero the cap)
                 15, 87, 192,
                 // movss [rbx+44h],xmm0 (original)
                 243, 15, 17, 67, 68,
             ],
+            OriginalRegions = [(12, 0, 5)],
         },
 
         // Race Time Scale: multiply race timer
-        // Signature at result+29, Original: F3 0F 5A CE F2 0F 58 C8
         RuntimeProfileFeature.RaceTimeScale => new()
         {
-            Key = "RaceTimeScale", Name = "Race Time Scale",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "40 ? 48 83 EC ? 48 8B ? 48 8B ? 0F 29 ? ? ? 0F 28 ? FF 50 ? 0F 57",
             MatchOffset = 29, HookSize = 8,
             ExpectedOriginal = [243, 15, 90, 206, 242, 15, 88, 200],
-            ToggleOffset = 20, ValueOffset = 21,
+            ToggleOffset = 30, ValueOffset = 31,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 15, 0, 0, 0, 1,
-                // jne skip
-                117, 7,
-                // cvtss2sd xmm1,[value]
-                243, 15, 90, 13, 2, 0, 0, 0,
+                // cmp byte [rip+23], 1 → toggle at Asm+5=30
+                128, 61, 23, 0, 0, 0, 1,
+                // jne +8 → skip cvtss2sd to addsd
+                117, 8,
+                // cvtss2sd xmm1,[rip+14] → value at Asm+6=31
+                243, 15, 90, 13, 14, 0, 0, 0,
                 // addsd xmm1,xmm0 (original part)
                 242, 15, 88, 200,
                 // cvtss2sd xmm1,xmm6 (original first instr)
                 243, 15, 90, 206,
             ],
+            OriginalRegions = [(17, 4, 4), (21, 0, 4)],
         },
 
         // Acceleration Override: replace car acceleration input with custom value
-        // FH6 variant from Omkmakwana: F3 0F 10 81 ?? ?? ?? ?? F3 0F 59 C1 C3
-        // Original: F3 0F 10 5D 0C (movss xmm3,[rbp+0Ch])
         RuntimeProfileFeature.Acceleration => new()
         {
-            Key = "Acceleration", Name = "Acceleration Override",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "F3 0F ? ? ? 41 0F ? ? 0F C6 DB ? 41 0F",
             MatchOffset = 0, HookSize = 5,
             ExpectedOriginal = [243, 15, 16, 93, 12],
-            ToggleOffset = 14, ValueOffset = 15,
+            ToggleOffset = 27, ValueOffset = 28,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 11, 0, 0, 0, 1,
-                // jne skip
-                117, 3,
-                // movss xmm3,[value]
-                243, 15, 16, 29, 2, 0, 0, 0,
+                // cmp byte [rip+20], 1 → toggle at Asm+5=27
+                128, 61, 20, 0, 0, 0, 1,
+                // jne +8 → skip movss to original
+                117, 8,
+                // movss xmm3,[rip+11] → value at Asm+6=28
+                243, 15, 16, 29, 11, 0, 0, 0,
                 // movss xmm3,[rbp+0Ch] (original)
                 243, 15, 16, 93, 12,
             ],
+            OriginalRegions = [(17, 0, 5)],
         },
 
         // Speed Trap Multiplier: multiply speed trap score
-        // Original: 0F 29 44 24 30 (movaps [rsp+30h],xmm0)
         RuntimeProfileFeature.SpeedTrapMultiplier => new()
         {
-            Key = "SpeedTrapMultiplier", Name = "Speed Trap Multiplier",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "0F 29 ? ? ? 48 8B ? 48 8B ? ? ? ? ? 48 85 ? 74",
             MatchOffset = 0, HookSize = 5,
             ExpectedOriginal = [15, 41, 68, 36, 48],
-            ToggleOffset = 14, ValueOffset = 15,
+            ToggleOffset = 27, ValueOffset = 28,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 11, 0, 0, 0, 1,
-                // jne skip
-                117, 3,
-                // mulss xmm0,[value]
-                243, 15, 89, 5, 2, 0, 0, 0,
+                // cmp byte [rip+20], 1 → toggle at Asm+5=27
+                128, 61, 20, 0, 0, 0, 1,
+                // jne +8 → skip mulss to original
+                117, 8,
+                // mulss xmm0,[rip+11] → value at Asm+6=28
+                243, 15, 89, 5, 11, 0, 0, 0,
                 // movaps [rsp+30h],xmm0 (original)
                 15, 41, 68, 36, 48,
             ],
+            OriginalRegions = [(17, 0, 5)],
         },
 
         // Mission Time Scale: scale mission timer (0 = freeze)
-        // Original: F3 0F 5C C7 F3 0F 11 87 0C 04 00 00
         RuntimeProfileFeature.MissionTimeScale => new()
         {
-            Key = "MissionTimeScale", Name = "Mission Time Scale",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "F3 0F ? ? F3 0F ? ? ? ? ? ? 0F 2F ? 0F 87 ? ? ? ? C7 ? ? ? ? ? 00 00 00 00",
             MatchOffset = 0, HookSize = 12,
             ExpectedOriginal = [243, 15, 92, 199, 243, 15, 17, 135, 12, 4, 0, 0],
-            ToggleOffset = 26, ValueOffset = 27,
+            ToggleOffset = 34, ValueOffset = 35,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 16, 0, 0, 0, 1,
-                // jne skip
-                117, 7,
-                // mulss xmm0,[value]
-                243, 15, 89, 5, 2, 0, 0, 0,
+                // cmp byte [rip+27], 1 → toggle at Asm+5=34
+                128, 61, 27, 0, 0, 0, 1,
+                // jne +8 → skip mulss to subss
+                117, 8,
+                // mulss xmm0,[rip+18] → value at Asm+6=35
+                243, 15, 89, 5, 18, 0, 0, 0,
                 // subss xmm0,xmm7 (original first)
                 243, 15, 92, 199,
                 // movss [rdi+40Ch],xmm0 (original second)
                 243, 15, 17, 135, 12, 4, 0, 0,
             ],
+            OriginalRegions = [(17, 0, 12)],
         },
 
         // Free Clothing: set clothing item price to 0
-        // Confirmed FH6 match: 8B 88 A4 00 00 00 89 4D 98 (mov ecx,[rax+A4h]; mov [rbp-68],ecx)
         RuntimeProfileFeature.FreeClothing => new()
         {
-            Key = "FreeClothing", Name = "Free Clothing",
+            BrokenNote = "Unverified — ForzaMods signature, needs RE",
             Signature = "8B 88 A4 00 00 00 89 4D",
             MatchOffset = 0, HookSize = 6,
             ExpectedOriginal = [139, 136, 164, 0, 0, 0],
-            ToggleOffset = 18, ValueOffset = -1,
+            ToggleOffset = 23, ValueOffset = -1,
             Asm =
             [
-                // cmp [toggle], 1
-                128, 61, 14, 0, 0, 0, 1,
-                // jne skip
+                // cmp byte [rip+16], 1 → toggle at Asm+5=23
+                128, 61, 16, 0, 0, 0, 1,
+                // jne +3 → skip xor to original
                 117, 3,
                 // xor ecx,ecx (price = 0)
                 49, 201,
@@ -485,6 +510,7 @@ internal static class ProfileFeatureCatalog
                 // mov ecx,[rax+0A4h] (original)
                 139, 136, 164, 0, 0, 0,
             ],
+            OriginalRegions = [(12, 0, 6)],
         },
 
         _ => throw new System.InvalidOperationException("Unsupported runtime profile feature."),

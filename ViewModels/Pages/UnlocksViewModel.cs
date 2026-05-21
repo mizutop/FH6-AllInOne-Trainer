@@ -333,6 +333,8 @@ public partial class UnlocksViewModel : PageViewModelBase
         Toggle(RuntimeProfileFeature.DriftScoreMultiplier, on, ParseFloatAsIntBits(DriftMultiText, 10f), "Drift Score x");
         IsDriftMultiOn = _cheats.IsActive(RuntimeProfileFeature.DriftScoreMultiplier);
     }
+    [RelayCommand] private void ApplyDriftMulti()
+        => ApplyValue(RuntimeProfileFeature.DriftScoreMultiplier, ParseFloatAsIntBits(DriftMultiText, 10f), "Drift Score x");
     [RelayCommand] private void ToggleNoSkillBreak()
     {
         var on = !_cheats.IsActive(RuntimeProfileFeature.NoSkillBreak);
