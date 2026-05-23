@@ -1,78 +1,69 @@
 # FH6 All-in-One Trainer
 
-An all-in-one trainer for **Forza Horizon 6** — runtime hooks for player profile values + car/physics cheats + live SQL access to the game's in-memory database. Single-file `.exe`, no extra runtime needed.
+An all-in-one trainer for **Forza Horizon 6** — runtime hooks for player profile values + car/physics cheats + live SQL access to the game's in-memory database. Self-contained `.exe`, no .NET install needed.
 
-> Use at your own risk. This trainer modifies game memory. Microsoft / Playground Games can ban your account. **Solo / Free Roam only — never use online (Rivals, Eventlab, Multiplayer, leaderboards).**
+> **Offline mode only.** This trainer modifies game memory. Online play (Rivals, Eventlab, Multiplayer, leaderboards) will not work and may result in a ban. Run FH6 in offline mode before using.
 
 ## Download
 
-Latest release: **[GitHub Releases](../../releases)** — download the `.zip`, extract, and run `FH6AllInOneTrainer.exe` as Administrator. Self-contained — no .NET install needed.
+Latest release: **[GitHub Releases](../../releases)** — download the `.zip`, extract, and run `FH6AllInOneTrainer.exe` as Administrator.
 
-## Working Features
+## Community-Tested Status
+
+Based on community reports (Steam version). **Your results may vary by game version.**
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| SQL: Free Cars, Free Upgrades, Autoshow | Working | Database writes, reliable |
+| SQL: Drift 10x, Torque 2x, Grip, Drag | Untested | New in v4.7.0 |
+| Freeze AI | Working | Signature verified |
+| Drift Score Multiplier | Working | Community confirmed |
+| Teleport, Gravity, Time of Day | Likely working | Signatures match |
+| Sell Payout, Skill Score, Prize Scale | Likely working | Signatures match |
+| Acceleration, Race/Mission Time | Likely working | Signatures match |
+| Speed Trap, Remove Build Cap, Free Clothing | Likely working | Signatures match |
+| Credits, Wheelspins, Super Wheelspins | **Broken** | Signatures not found on Steam builds |
+| Skill Points | **Broken** | Signature not found on Steam builds |
+| NoClip | **Broken** | Hooks wrong function |
+| No Skill Break | **Broken** | Signature not found |
+| XP Override | **Broken** | No known working approach |
+| Add All Cars | Partial | Only adds DLC cars (not all 721) |
+
+Use the **Signature Scan** button in Settings to check which cheats match your game version.
+
+## Features
 
 ### Quick Actions
-- **Quick Start** — 999M Credits + Free Cars + Autoshow Unlock + All Cars, one click
-- **Max All** — Credits 999M, Wheelspins 999, Super Wheelspins 999, Skill Points 999K
+- **Quick Start** — Free Cars + Autoshow Unlock + Install Flags + All Cars, one click
+- **Max All** — max Credits, Wheelspins, Super Wheelspins, Skill Points
 
-### Profile Values (NOP-sled memory hooks)
-- **Credits (CR)** — prevents credit deduction with presets (10K to 999M)
-- **Wheelspins** — prevents wheelspin consumption (10 to 999)
-- **Super Wheelspins** — prevents super wheelspin consumption
-- **Skill Points** — prevents skill point spending (100 to 999K)
-- **Sell Payout x** — multiply car sell price by any factor
+### Profile Values (memory hooks)
+- Credits, Wheelspins, Super Wheelspins, Skill Points, Sell Payout
 
 ### Racing & World
-- **Freeze AI** — stops all AI Drivatar cars during races
-- **Teleport to Waypoint** — instantly teleport to any map waypoint
-- **Gravity Multiplier** — adjust gravity (0.5x moon, 2x heavy, etc.)
-- **No Water Drag** — remove water resistance
-- **Time of Day** — set any hour (6=dawn, 12=noon, 18=dusk, 0=midnight)
-- **Acceleration Override** — boost car acceleration with custom multiplier
-- **Free Clothing** — set all clothing prices to 0
+- Freeze AI, Teleport, Gravity, No Water Drag, Time of Day, Acceleration, Free Clothing
 
 ### Scoring & Rewards
-- **Drift Score Multiplier** — multiply drift scoring (5x, 10x, 50x)
-- **Skill Score Multiplier** — multiply skill chain score (10x, 100x)
-- **Prize Scale** — multiply wheelspin reward value
-- **Speed Trap Multiplier** — multiply speed trap score
-- **Skill Score Multiplier** — multiply earned skill score
+- Drift Score x, Skill Score x, Prize Scale, Speed Trap x
 
 ### Timers
-- **Race Time Scale** — slow down or freeze race timer (0 = freeze)
-- **Mission Time Scale** — slow down or freeze mission timer
-- **Remove Build Cap** — remove engine swap / build power limit
+- Race Time Scale, Mission Time Scale, Remove Build Cap
 
 ### SQL Database (in-memory SQLite)
 - **Unlock Everything** — all SQL cheats in one click
-- **Free Cars (LOCK)** — BaseCost stays at 0 (re-applied every 10s)
-- **Autoshow All Visible (LOCK)** — every car in showroom
-- **Install Flags (LOCK)** — IsInstalled/IsPurchased/IsDrivable stay at 1
-- **Add All Cars** — grant every car free
-- **Free Upgrades** — price=0 on all 47 upgrade tables
-- **Free Wheels** — price=1 on all wheels
-- **Full Autoshow** — complete autoshow with CarBuckets
+- Free Cars (LOCK), Autoshow (LOCK), Install Flags (LOCK)
+- Add All Cars, Free Upgrades (47 tables), Free Wheels, Full Autoshow
+- Unlock Upgrade Presets
 
 ### Physics & Performance (SQL)
-- **Drift Score 10x** — sets DriftScoreScalar=10.0 on all tracks
-- **Max Traction (Grip Hack)** — massive grip increase on all cars + wet tire compounds
-- **Torque Scale 2x** — doubles engine torque output
-- **Reduce Drag 0.5x** — halves aero drag for higher top speed
+- Drift Score 10x, Max Traction, Torque 2x, Reduce Drag
 
 ## Anti-Cheat Bypass
 
-- **CRC bypass** — vtable function pointer swap with 5s heartbeat + random jitter
-- **Value Encryption bypass** — RET at encryption function prologue, keeps profile values in plaintext
-- **5 integrity check patches** — TextSection hash, PageHash, MemCmp, CodeSection verify, Checksum verify
-- **Thread-safe patching** — all FH6 threads suspended during CRC heartbeat dance
-- **ExpectedOriginal sanity check** — refuses to inject if target bytes don't match
-- **Auto-detach** when game exits
-
-## Still Broken
-These cheats exist in the UI but don't work (broken across ALL known FH6 trainers):
-- NoClip — hooks wrong function (string/hash compare, not collision)
-- No Skill Break — signature found but unreliable
-- XP Override — address not found in FH6
-- God Mode — not yet implemented
+- CRC bypass with 5s heartbeat + jitter
+- Value Encryption bypass (RET at encryption prologue)
+- 5 integrity check patches
+- Thread-safe patching with ExpectedOriginal sanity check
 
 ## Build from Source
 
@@ -82,19 +73,17 @@ Requires **.NET 10 SDK** on Windows:
 dotnet publish -c Release -r win-x64 --self-contained
 ```
 
-Output: `bin/Release/net10.0-windows/win-x64/publish/FH6AllInOneTrainer.exe`
-
 ## Credits
 
 | Who | Contribution |
 |-----|-------------|
-| **[paris' club](https://discord.gg/WSd3bRNJuJ)** | Core cheats: runtime hooks, SQL features, CRC bypass |
+| **[paris' club](https://discord.gg/WSd3bRNJuJ)** | Core cheats, SQL features, CRC bypass |
 | **[ForzaMods](https://github.com/ForzaMods/Forza-Mods-AIO)** | AOB signatures for hook-based cheats |
-| **[Omkmakwana](https://github.com/Omkmakwana/FH6Trainer)** | NOP-sled approach for Credits/Wheelspins/SkillPoints |
+| **[Omkmakwana](https://github.com/Omkmakwana/FH6Trainer)** | NOP-sled approach, Add All Cars |
 | **[matkhl](https://www.unknowncheats.me/forum/other-games/752793)** | Free Upgrades SQL (47 tables), database dumper |
 | **[Chaarkor](https://github.com/Chaarkoor)** | Original Avalonia UI shell, MVVM architecture |
 | **[changcheng967](https://github.com/changcheng967)** | All-in-one improvements, physics SQL cheats, value encryption bypass |
 
 ## License
 
-GPL-3.0 — source must remain open. See [LICENSE](LICENSE).
+GPL-3.0 — see [LICENSE](LICENSE).
