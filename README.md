@@ -16,20 +16,22 @@ Based on community reports (Steam version). **Your results may vary by game vers
 |---------|--------|-------|
 | SQL: Free Cars, Free Upgrades, Autoshow | Working | Database writes, reliable |
 | SQL: Drift 10x, Torque 2x, Grip, Drag | Untested | New in v4.7.0 |
-| Freeze AI | Working | Signature verified |
+| Credits, Wheelspins, Super Wheelspins | Working | Signatures may not match all game builds |
+| Skill Points | Working | Signatures may not match all game builds |
+| Freeze AI | Working | Signature verified across builds |
 | Drift Score Multiplier | Working | Community confirmed |
-| Teleport, Gravity, Time of Day | Likely working | Signatures match |
-| Sell Payout, Skill Score, Prize Scale | Likely working | Signatures match |
-| Acceleration, Race/Mission Time | Likely working | Signatures match |
-| Speed Trap, Remove Build Cap, Free Clothing | Likely working | Signatures match |
-| Credits, Wheelspins, Super Wheelspins | **Broken** | Signatures not found on Steam builds |
-| Skill Points | **Broken** | Signature not found on Steam builds |
-| NoClip | **Broken** | Hooks wrong function |
-| No Skill Break | **Broken** | Signature not found |
-| XP Override | **Broken** | No known working approach |
+| Teleport, Gravity, Time of Day | Working | Signatures match across builds |
+| Sell Payout, Skill Score, Prize Scale | Working | Signatures match across builds |
+| Acceleration, Race/Mission Time | Working | Signatures match across builds |
+| Speed Trap, Remove Build Cap, Free Clothing | Working | Signatures match across builds |
+| NoClip | Broken | Hooks wrong function |
+| No Skill Break | Version-dependent | Signature may not match all builds |
+| XP Override | Broken | No known working approach |
 | Add All Cars | Partial | Only adds DLC cars (not all 721) |
 
-Use the **Signature Scan** button in Settings to check which cheats match your game version.
+If a cheat says "signature not found", your game build may differ. Use the **Signature Scan** in Settings to check compatibility.
+
+Use the **Signature Scan** in Settings to check which cheats match your game build.
 
 ## Features
 
