@@ -16,6 +16,8 @@ public sealed class RuntimeHookEngine : IDisposable
     private readonly object _lock = new();
     private readonly Dictionary<string, RuntimeDetour> _hooks = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<ulong> _hookedAddresses = new();
+    private readonly Dictionary<string, ulong> _preResolvedTargets = new(StringComparer.OrdinalIgnoreCase);
+    private bool _preResolved;
     private FnvProfileResolver? _fnvResolver;
 
     private IntPtr _handle;
@@ -234,6 +236,9 @@ public sealed class RuntimeHookEngine : IDisposable
         FreeCrcRetStub();
         _fnvResolver?.Dispose();
         _fnvResolver = null;
+
+        _preResolved = false;
+        _preResolvedTargets.Clear();
 
         _process?.Dispose();
         _process = null;
@@ -456,18 +461,57 @@ public sealed class RuntimeHookEngine : IDisposable
         if (_hooks.TryGetValue(desc.Key, out var existing)) return existing;
 
         EnsureCrcBypass();
+        EnsurePreResolved();
 
-        L($"{desc.Name}: scanning sig '{desc.Signature}'...");
-        var moduleBytes = ReadBytes(_mainBase, _mainSize);
-        if (moduleBytes.Length == 0)
-            throw new InvalidOperationException($"Could not read main module for {desc.Name} scan.");
-
-        var hookAddr = FindProfileHookTarget(moduleBytes, desc);
+        ulong hookAddr;
+        if (_preResolvedTargets.TryGetValue(desc.Key, out var cached))
+        {
+            hookAddr = cached;
+            L($"{desc.Name}: using pre-resolved target at 0x{hookAddr:X}");
+        }
+        else
+        {
+            L($"{desc.Name}: scanning sig '{desc.Signature}'...");
+            var moduleBytes = ReadBytes(_mainBase, _mainSize);
+            if (moduleBytes.Length == 0)
+                throw new InvalidOperationException($"Could not read main module for {desc.Name} scan.");
+            hookAddr = FindProfileHookTarget(moduleBytes, desc);
+        }
 
         var det = CreateRuntimeDetour(desc, hookAddr);
         _hooks[desc.Key] = det;
         L($"{desc.Name} detour installed. target=0x{hookAddr:X}, cave=0x{det.DetourAddress:X}, size={det.Size}B");
         return det;
+    }
+
+    /// <summary>
+    /// Pre-resolves all profile hook targets before any hooks are installed.
+    /// This prevents NOP-sleds from corrupting nearby signatures (e.g., Wheelspins
+    /// and SkillPoints share the same function and their instructions are 12 bytes apart).
+    /// </summary>
+    private void EnsurePreResolved()
+    {
+        if (_preResolved) return;
+        _preResolved = true;
+
+        var moduleBytes = ReadBytes(_mainBase, _mainSize);
+        if (moduleBytes.Length == 0) return;
+
+        L("Pre-resolving all hook targets (no hooks installed yet)...");
+        foreach (RuntimeProfileFeature feature in Enum.GetValues<RuntimeProfileFeature>())
+        {
+            var desc = ProfileFeatureCatalog.Get(feature);
+            if (desc.BrokenNote != null) continue;
+            if (_preResolvedTargets.ContainsKey(desc.Key)) continue;
+
+            try
+            {
+                var addr = FindProfileHookTarget(moduleBytes, desc);
+                _preResolvedTargets[desc.Key] = addr;
+            }
+            catch { /* some features may not match, that's OK */ }
+        }
+        L($"Pre-resolved {_preResolvedTargets.Count} hook targets");
     }
 
     /// <summary>
