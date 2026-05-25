@@ -32,6 +32,8 @@ public sealed class RuntimeHookEngine : IDisposable
     private int _crcTimerRunning;
     private static readonly Random _jitter = new();
     private readonly List<IntegrityPatch> _integrityPatches = new();
+    private readonly List<(string Name, string Signature, int PatchOffset, int PatchLen, byte[] Expected, byte[] Replace)> _pendingBypasses = new();
+    private int _deferredRetryCount;
 
     private struct IntegrityPatch
     {
@@ -243,6 +245,8 @@ public sealed class RuntimeHookEngine : IDisposable
         _mainBase = 0;
         _mainSize = 0;
         _crcBypassActive = false;
+        _pendingBypasses.Clear();
+        _deferredRetryCount = 0;
     }
 
     public void Dispose() => Detach();
@@ -761,14 +765,14 @@ public sealed class RuntimeHookEngine : IDisposable
             // 2. PageHash_start: TEST RAX,RAX / JNZ → NOP NOP (always take "hash was 0 = clean" path)
             ("PageHash",
              "48 83 EC 20 48 8B F1 BA 02 00 00 00 48 8B 89 50 02 00 00 E8 ?? ?? ?? ?? 48 8B F8 48 85 C0 75",
-             31, 2,
+             30, 2,
              [0x75],      // JNZ
              [0x90]),     // NOP
 
             // 3. TextSection_hash: TEST RAX,RAX / CMOVNZ ECX,EDX → NOP NOP NOP (flag never set to 1)
             ("TextHash",
              "48 8D 15 ?? ?? ?? ?? 48 8B C8 FF 15 ?? ?? ?? ?? 0F B6 0D ?? ?? ?? ?? BA 01 00 00 00 48 85 C0 0F 45",
-             32, 3,
+             31, 3,
              [0x0F, 0x45], // CMOVNZ
              [0x90, 0x90]), // NOP NOP
 
@@ -827,11 +831,77 @@ public sealed class RuntimeHookEngine : IDisposable
                     found = true;
                     break;
                 }
-                if (!found) L($"Integrity bypass: {name} NOT FOUND (skipped)");
+                if (!found)
+                {
+                    L($"Integrity bypass: {name} NOT FOUND (will retry — Denuvo may not have decrypted this page yet)");
+                    _pendingBypasses.Add((name, sig, patchOffset, patchLen, expected, replace));
+                }
             }
             catch (Exception ex) { L($"Integrity bypass {name} failed: {ex.Message}"); }
         }
-        L($"Integrity bypasses applied: {_integrityPatches.Count}/5");
+        L($"Integrity bypasses applied: {_integrityPatches.Count}/5 (pending: {_pendingBypasses.Count})");
+    }
+
+    /// <summary>
+    /// Retry finding integrity bypasses that failed on the first scan.
+    /// Denuvo decrypts code pages on demand — signatures for PageHash/TextHash may only
+    /// become visible after the game has run those checks at least once.
+    /// Called from CrcTimerTick before the patch phase.
+    /// </summary>
+    private void RetryPendingBypasses()
+    {
+        if (_pendingBypasses.Count == 0 || _mainBase == 0 || _mainSize <= 0) return;
+        if (_deferredRetryCount > 60) return; // Give up after ~5 minutes of retrying
+
+        _deferredRetryCount++;
+        var bytes = ReadBytes(_mainBase, _mainSize);
+        if (bytes.Length == 0) return;
+
+        var found = new List<int>();
+        for (var i = 0; i < _pendingBypasses.Count; i++)
+        {
+            var (name, sig, patchOffset, patchLen, expected, replace) = _pendingBypasses[i];
+            try
+            {
+                var pattern = Pattern.Parse(sig);
+                foreach (var off in Pattern.FindAll(bytes, pattern, 32))
+                {
+                    var addr = _mainBase + (ulong)(off + patchOffset);
+                    var current = ReadBytes(addr, patchLen);
+                    if (current.Length < patchLen) continue;
+                    if (current[0] != expected[0]) continue;
+
+                    var patch = new byte[patchLen];
+                    if (name == "CodeSection")
+                    {
+                        patch[0] = 0xB8; patch[1] = 0x01; patch[2] = 0x00; patch[3] = 0x00; patch[4] = 0x00;
+                    }
+                    else
+                    {
+                        for (var j = 0; j < patchLen; j++) patch[j] = 0x90;
+                    }
+
+                    _integrityPatches.Add(new IntegrityPatch
+                    {
+                        Name = name,
+                        Address = addr,
+                        Original = current,
+                        Replacement = patch,
+                    });
+                    L($"Deferred bypass: {name} FOUND at 0x{addr:X} (attempt #{_deferredRetryCount})");
+                    found.Add(i);
+                    break;
+                }
+            }
+            catch { /* ignore */ }
+        }
+
+        // Remove found entries from pending list (iterate in reverse to preserve indices)
+        for (var i = found.Count - 1; i >= 0; i--)
+            _pendingBypasses.RemoveAt(found[i]);
+
+        if (found.Count > 0)
+            L($"Deferred bypass: found {found.Count} new ({_integrityPatches.Count}/5 patched, {_pendingBypasses.Count} pending)");
     }
 
     private void StartCrcTimer()
@@ -880,6 +950,12 @@ public sealed class RuntimeHookEngine : IDisposable
             // Give the game a longer window (2s) to run its integrity checks cleanly.
             // The old 1s window was too short — the check might not complete in time.
             Thread.Sleep(2000);
+
+            // Retry any integrity bypasses that weren't found initially.
+            // Denuvo decrypts code pages on demand — after the game runs its checks
+            // during the clean window, those pages are now readable.
+            if (_pendingBypasses.Count > 0)
+                RetryPendingBypasses();
 
             // Phase 2: re-apply patches atomically (all threads suspended)
             lock (_lock)

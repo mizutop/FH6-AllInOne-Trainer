@@ -37,13 +37,14 @@ Uses inline code cave hooks with toggle+value slots — based on the paris' club
 ## Anti-Cheat Bypass
 
 - CRC bypass with heartbeat timer + jitter (XXH check pointer replacement)
-- 3/5 integrity check patches (MemCmp, CodeSection, Checksum)
+- 5/5 integrity check patches (MemCmp, PageHash, TextHash, CodeSection, Checksum)
+- Deferred retry for Denuvo-encrypted pages — signatures that aren't available on first scan are retried during the CRC heartbeat
 - Thread-safe patching with ExpectedOriginal sanity check
 - Pre-resolution: all hook targets are scanned before any hooks are installed
 
 ## Known Limitations
 
-- **PageHash and TextHash integrity patches not found** on the latest FH6 builds (2/5 integrity patches missing). This may cause delayed game crashes on some systems. A full disassembly is in progress to find the correct signatures.
+- **Denuvo timing** — PageHash and TextHash code pages are encrypted by Denuvo in the static binary and only decrypted at runtime. The trainer retries missing patches during the CRC heartbeat, but there may be a brief window (first ~30s) where not all patches are active.
 - **Value Encryption bypass signature not found** on latest builds. Some profile value changes may not persist between sessions.
 - **XP / Level modding** is not yet supported. See [issue #19](../../issues/19) for discussion.
 - Teleport, Freeze AI, timers, gravity, and other experimental cheats from earlier versions were removed — they used signatures that matched the wrong functions and didn't work reliably.
