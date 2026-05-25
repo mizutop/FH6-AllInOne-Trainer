@@ -162,6 +162,7 @@ public sealed class RuntimeHookEngine : IDisposable
     public void   WriteInt32Public(ulong addr, int value) => WriteInt32(addr, value);
     public bool   IsExecutableAddressPublic(ulong addr) => IsExecutableAddress(addr);
     public bool   IsAddressHooked(ulong addr) => _hookedAddresses.Contains(addr);
+    public bool   IsFnvActive(RuntimeProfileFeature f) => _fnvResolver?.IsFieldActive(f) ?? false;
     public void   LogPublic(string msg) => L(msg);
 
     public string DiagnosticsTail(int lines = 12)
@@ -337,6 +338,8 @@ public sealed class RuntimeHookEngine : IDisposable
         {
             try
             {
+                // FNV direct-write: no .text modification, no CRC bypass needed.
+                // Values are written directly to the heap-allocated profile struct.
                 var resolver = EnsureFnvResolver();
                 if (resolver != null)
                 {
@@ -431,6 +434,76 @@ public sealed class RuntimeHookEngine : IDisposable
             error = $"{desc.Name} is disabled: {desc.BrokenNote}";
             return false;
         }
+
+        // FNV direct-write: update the lock value directly
+        if (desc.SupportsDirectWrite)
+        {
+            // If FNV resolver is active for this field, just update the lock
+            if (_fnvResolver != null && _fnvResolver.IsFieldActive(feature))
+            {
+                try
+                {
+                    _fnvResolver.StartLock(feature, value, 5000);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    error = ex.Message;
+                    return false;
+                }
+            }
+
+            // If NOP-sled fallback was used, try FNV resolution again
+            // (it might succeed now if the heap state changed)
+            try
+            {
+                var resolver = EnsureFnvResolver();
+                if (resolver != null)
+                {
+                    var moduleBytes = ReadBytes(_mainBase, _mainSize);
+                    if (moduleBytes.Length > 0 && resolver.TryResolve(feature, moduleBytes))
+                    {
+                        // Stop the NOP-sled hook first
+                        if (_hooks.TryGetValue(desc.Key, out var det))
+                            WriteByte(det.DetourAddress + (ulong)desc.ToggleOffset, 0);
+
+                        // Start FNV direct-write lock instead
+                        resolver.StartLock(feature, value, 5000);
+                        L($"{desc.Name}: switched from NOP-sled to FNV direct-write");
+                        return true;
+                    }
+                }
+            }
+            catch { /* FNV still failing, fall through */ }
+
+            // NOP-sled path — pure NOP-sleds can't update values
+            lock (_lock)
+            {
+                if (!_hooks.TryGetValue(desc.Key, out var det))
+                {
+                    error = $"{desc.Name} is not enabled.";
+                    return false;
+                }
+                if (desc.ValueOffset < 0)
+                {
+                    // NOP-sled doesn't embed values — re-enable with new value (NOP-sled is a no-op for value)
+                    L($"{desc.Name}: NOP-sled does not support value updates (value={value} ignored, cheat remains active)");
+                    return true;
+                }
+                try
+                {
+                    WriteInt32(det.DetourAddress + (ulong)desc.ValueOffset, value);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    error = ex.Message;
+                    return false;
+                }
+            }
+        }
+
+        // Non-direct-write features
         lock (_lock)
         {
             if (!_hooks.TryGetValue(desc.Key, out var det))
@@ -798,6 +871,25 @@ public sealed class RuntimeHookEngine : IDisposable
             return;
         }
         L("Value Encryption bypass: signature NOT FOUND (skipped)");
+    }
+
+    /// <summary>
+    /// Ensures value encryption bypass is applied even when using FNV direct-write path
+    /// (which doesn't need the full CRC bypass). Without this, the game encrypts profile
+    /// values and our plaintext writes are overwritten with encrypted garbage.
+    /// </summary>
+    private void EnsureValueEncryptionBypass()
+    {
+        if (_valueEncryptionAddr != 0) return;
+        if (_mainBase == 0 || _mainSize <= 0) return;
+
+        // If CRC bypass is active, encryption bypass is already included
+        if (_crcBypassActive) return;
+
+        var bytes = ReadBytes(_mainBase, _mainSize);
+        if (bytes.Length == 0) return;
+
+        ApplyValueEncryptionBypass(bytes);
     }
 
     /// <summary>

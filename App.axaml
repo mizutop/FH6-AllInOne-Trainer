@@ -24,7 +24,6 @@
             <conv:StatusLabelConverter       x:Key="StatusLabelConverter" />
             <conv:StatusBgConverter          x:Key="StatusBgConverter" />
             <conv:StatusFgConverter          x:Key="StatusFgConverter" />
-            <conv:UpdateFooterColorConverter x:Key="UpdateFooterColorConverter" />
             <conv:HexToBrushConverter        x:Key="HexToBrushConverter" />
             <conv:NotNullConverter           x:Key="NotNullConverter" />
 

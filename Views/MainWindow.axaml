@@ -3,10 +3,9 @@
         xmlns:vm="using:FH6Mod.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
-        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="780"
-        Width="1200" Height="780"
-        MinWidth="980" MinHeight="640"
+        mc:Ignorable="d" d:DesignWidth="880" d:DesignHeight="620"
+        Width="880" Height="620"
+        MinWidth="720" MinHeight="500"
         x:Class="FH6Mod.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="FH6 All-in-One Trainer"
@@ -14,179 +13,47 @@
         WindowStartupLocation="CenterScreen"
         Icon="/Assets/logo.png">
 
-    <Grid RowDefinitions="44,*,32">
+    <Grid RowDefinitions="Auto,Auto,*">
 
-        <!-- ===== Top bar ===== -->
-        <Border Grid.Row="0"
+        <!-- Title bar -->
+        <Border Grid.Row="0" Padding="16,8"
                 Background="{DynamicResource Surface0Brush}"
                 BorderBrush="{DynamicResource SurfaceBorderBrush}"
                 BorderThickness="0,0,0,1">
-            <Grid ColumnDefinitions="Auto,*,Auto" Margin="16,0">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                    <Border x:Name="LogoBox" Width="28" Height="28" CornerRadius="6" ClipToBounds="True"
-                            Opacity="0" RenderTransform="scale(0.85)">
-                        <Border.Transitions>
-                            <Transitions>
-                                <DoubleTransition Property="Opacity" Duration="0:0:0.5" Easing="CubicEaseOut" />
-                                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Easing="CubicEaseOut" />
-                            </Transitions>
-                        </Border.Transitions>
-                        <Image Source="/Assets/logo.png" Stretch="UniformToFill" />
-                    </Border>
-                    <TextBlock Text="FH6 All-in-One Trainer" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding CurrentVersionText}" Classes="dim" VerticalAlignment="Center" Margin="4,1,0,0" />
-
-                    <Button IsVisible="{Binding IsUpdateAvailable}"
-                            Command="{Binding OpenReleasesPageCommand}"
-                            Background="#1A4DA3FF" BorderBrush="#4DA3FF" BorderThickness="1"
-                            CornerRadius="999" Padding="10,3"
-                            VerticalAlignment="Center" Margin="6,0,0,0"
-                            ToolTip.Tip="{Binding UpdateTooltip}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <materialIcons:MaterialIcon Kind="DownloadOutline" Width="13" Height="13"
-                                                        Foreground="#7FBFFF" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding UpdateChipText}" VerticalAlignment="Center"
-                                       FontSize="11" Foreground="#7FBFFF" FontWeight="SemiBold" />
-                        </StackPanel>
-                    </Button>
+            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="FH6 Trainer" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding CurrentVersionText}" Classes="dim" VerticalAlignment="Center" />
                 </StackPanel>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                    <Ellipse x:Name="StatusDot" Width="9" Height="9"
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Ellipse x:Name="StatusDot" Width="8" Height="8"
                              Fill="{DynamicResource StatusErr}"
-                             VerticalAlignment="Center">
-                        <Ellipse.Transitions>
-                            <Transitions>
-                                <BrushTransition Property="Fill" Duration="0:0:0.25" />
-                            </Transitions>
-                        </Ellipse.Transitions>
-                    </Ellipse>
-                    <TextBlock Text="{Binding GameStatusText}" Classes="subtle" VerticalAlignment="Center" />
+                             VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding GameStatusText}" Classes="subtle" VerticalAlignment="Center" FontSize="12" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- ===== Main: sidebar + content ===== -->
-        <Grid Grid.Row="1" ColumnDefinitions="216,*">
-
-            <!-- Sidebar -->
-            <Border Grid.Column="0"
-                    Background="{DynamicResource Surface1Brush}"
-                    BorderBrush="{DynamicResource SurfaceBorderBrush}"
-                    BorderThickness="0,0,1,0">
-                <Grid RowDefinitions="*,Auto">
-                    <ListBox Grid.Row="0"
-                             Classes="nav"
-                             ItemsSource="{Binding NavItems}"
-                             SelectedItem="{Binding MainSelectedItem}"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             Padding="0,12,0,12">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:NavItem">
-                                <Grid ColumnDefinitions="3,Auto,*"
-                                      Classes.working="{Binding IsWorking}">
-                                    <Border Grid.Column="0" Name="SelectionBar" />
-                                    <materialIcons:MaterialIcon Grid.Column="1" Name="NavIcon"
-                                                                Kind="{Binding Icon}"
-                                                                Width="18" Height="18"
-                                                                Margin="6,0,12,0"
-                                                                VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="2" Name="NavLabel"
-                                               Text="{Binding Label}"
-                                               VerticalAlignment="Center"
-                                               FontSize="13" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-
-                    <!-- Sidebar footer -->
-                    <Border Grid.Row="1" Padding="0,12,0,16">
-                        <StackPanel Spacing="6">
-                            <StackPanel Margin="16,0" Spacing="4">
-                                <TextBlock Text="FH6 ALL-IN-ONE TRAINER" Classes="eyebrow" />
-                                <TextBlock Text="Credits, wheelspins, skill points, free cars."
-                                           Classes="dim" TextWrapping="Wrap" />
-                            </StackPanel>
-
-                            <!-- Settings lives in the footer (separate selection from main nav;
-                                 sync handled by VM's OnMain/OnFooterSelectedItemChanged) -->
-                            <ListBox Classes="nav"
-                                     ItemsSource="{Binding FooterNavItems}"
-                                     SelectedItem="{Binding FooterSelectedItem}"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     Padding="0,6,0,4">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:NavItem">
-                                        <Grid ColumnDefinitions="3,Auto,*"
-                                              Classes.working="{Binding IsWorking}">
-                                            <Border Grid.Column="0" Name="SelectionBar" />
-                                            <materialIcons:MaterialIcon Grid.Column="1" Name="NavIcon"
-                                                                        Kind="{Binding Icon}"
-                                                                        Width="18" Height="18"
-                                                                        Margin="6,0,12,0"
-                                                                        VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="2" Name="NavLabel"
-                                                       Text="{Binding Label}"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="13" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-
-                            <Separator Margin="16,4" Background="{DynamicResource SurfaceBorderBrush}" Height="1" />
-                            <TextBlock Margin="16,0" Classes="dim" FontSize="11" Text="FH6 All-in-One Trainer" />
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
-
-            <!-- Content — cross-fade between pages when SelectedItem changes.
-                 Wrapped in a Panel so the mouse-glow gradient can sit on the same
-                 layer (behind cards but above the window background). -->
-            <Panel Grid.Column="1">
-                <!-- Glow underlay: tracks pointer, IsHitTestVisible=False so it
-                     never intercepts clicks. Brush + animation in code-behind. -->
-                <Border x:Name="MouseGlow" IsHitTestVisible="False" />
-
-                <TransitioningContentControl Content="{Binding CurrentPage}"
-                                             Padding="0">
-                    <TransitioningContentControl.PageTransition>
-                        <CrossFade Duration="0:0:0.22" />
-                    </TransitioningContentControl.PageTransition>
-                </TransitioningContentControl>
-            </Panel>
-        </Grid>
-
-        <!-- ===== Status bar ===== -->
-        <Border Grid.Row="2"
+        <!-- Tab bar -->
+        <Border Grid.Row="1"
                 Background="{DynamicResource Surface1Brush}"
                 BorderBrush="{DynamicResource SurfaceBorderBrush}"
-                BorderThickness="0,1,0,0">
-            <Grid ColumnDefinitions="*,Auto" Margin="16,0">
-                <TextBlock Grid.Column="0" Text="{Binding GameStatusDetail}"
-                           Classes="dim" VerticalAlignment="Center" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
-                    <!-- Update status (click to open releases when not up-to-date) -->
-                    <Button Background="Transparent" BorderThickness="0" Padding="0"
-                            Command="{Binding OpenReleasesPageCommand}"
-                            ToolTip.Tip="{Binding UpdateTooltip}"
-                            IsHitTestVisible="{Binding IsUpdateAvailable}">
-                        <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                            <Ellipse Width="7" Height="7" VerticalAlignment="Center"
-                                     Fill="{Binding UpdateFooterStatus, Converter={StaticResource UpdateFooterColorConverter}}" />
-                            <TextBlock Text="{Binding UpdateFooterText}" FontSize="12"
-                                       Foreground="{Binding UpdateFooterStatus, Converter={StaticResource UpdateFooterColorConverter}}" />
-                        </StackPanel>
-                    </Button>
-                    <TextBlock Text="EAC: passive" Classes="dim" />
-                    <TextBlock Text="Avalonia 12 · .NET 10" Classes="dim" />
-                    <TextBlock Classes="dim" Text="FH6 All-in-One Trainer · 2026" />
-                </StackPanel>
-            </Grid>
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Margin="12,0">
+                <Button Classes="tab" Content="Cheats"
+                        IsEnabled="{Binding SelectedTab, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=0}"
+                        Command="{Binding SelectTabCommand}" CommandParameter="0" />
+                <Button Classes="tab" Content="Database"
+                        IsEnabled="{Binding SelectedTab, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=1}"
+                        Command="{Binding SelectTabCommand}" CommandParameter="1" />
+                <Button Classes="tab" Content="Settings"
+                        IsEnabled="{Binding SelectedTab, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=2}"
+                        Command="{Binding SelectTabCommand}" CommandParameter="2" />
+            </StackPanel>
         </Border>
+
+        <!-- Page content -->
+        <ContentControl Grid.Row="2" Content="{Binding CurrentPage}" />
     </Grid>
 </Window>

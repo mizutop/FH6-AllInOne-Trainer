@@ -32,6 +32,8 @@ public partial class SettingsViewModel : PageViewModelBase
     public override string PageSubtitle => "Animations, diagnostics, profiles, about & credits.";
     public override MaterialIconKind PageIcon => MaterialIconKind.CogOutline;
 
+    public string VersionText => $"v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?.?.?"}";
+
     [ObservableProperty] private bool _animationsEnabled;
     [ObservableProperty] private bool _mouseGlowEnabled;
     [ObservableProperty] private string _selectedAccentName = AppSettings.Current.AccentName;

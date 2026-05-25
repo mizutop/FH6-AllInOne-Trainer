@@ -44,7 +44,6 @@ public partial class UnlocksViewModel : PageViewModelBase
     // --- New cheats (toggle-only or with float value) ---
     [ObservableProperty] private bool _isFreezeAIOn;
     [ObservableProperty] private bool _isTeleportOn;
-    [ObservableProperty] private bool _isNoClipOn;
     [ObservableProperty] private bool _isGravityMultiplierOn;
     [ObservableProperty] private string _gravityMultiplierText = "0.5";
     [ObservableProperty] private bool _isNoWaterDragOn;
@@ -58,12 +57,12 @@ public partial class UnlocksViewModel : PageViewModelBase
     [ObservableProperty] private bool _isRaceTimeScaleOn;
     [ObservableProperty] private string _raceTimeScaleText = "0.0";
 
-    // --- Broken ---
+    // --- Drift & Skills ---
     [ObservableProperty] private bool _isDriftMultiOn;
     [ObservableProperty] private string _driftMultiText = "10";
     [ObservableProperty] private bool _isNoSkillBreakOn;
 
-    // --- Batch 3: new cheats ---
+    // --- Batch 3: more cheats ---
     [ObservableProperty] private bool _isAccelerationOn;
     [ObservableProperty] private string _accelerationText = "2.0";
     [ObservableProperty] private bool _isSpeedTrapMultiplierOn;
@@ -258,14 +257,6 @@ public partial class UnlocksViewModel : PageViewModelBase
         var on = !_cheats.IsActive(RuntimeProfileFeature.Teleport);
         Toggle(RuntimeProfileFeature.Teleport, on, 0, "Teleport");
         IsTeleportOn = _cheats.IsActive(RuntimeProfileFeature.Teleport);
-    }
-
-    // ===== No Clip =====
-    [RelayCommand] private void ToggleNoClip()
-    {
-        var on = !_cheats.IsActive(RuntimeProfileFeature.NoClip);
-        Toggle(RuntimeProfileFeature.NoClip, on, 0, "No Clip");
-        IsNoClipOn = _cheats.IsActive(RuntimeProfileFeature.NoClip);
     }
 
     // ===== Gravity Multiplier =====

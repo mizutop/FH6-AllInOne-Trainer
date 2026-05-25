@@ -1,48 +1,69 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Card container — subtle lift on hover (translateY -2px + accent-ish border + glow) -->
+    <!-- Window chrome -->
+    <Style Selector="Window">
+        <Setter Property="Background" Value="{DynamicResource Surface0Brush}" />
+        <Setter Property="FontFamily" Value="Inter, $Default" />
+        <Setter Property="TransparencyLevelHint" Value="None" />
+    </Style>
+
+    <!-- Default text -->
+    <Style Selector="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="FontFamily" Value="Inter, $Default" />
+    </Style>
+
+    <Style Selector="TextBlock.h1">
+        <Setter Property="FontSize" Value="32" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="LetterSpacing" Value="-0.5" />
+    </Style>
+
+    <Style Selector="TextBlock.h2">
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="LetterSpacing" Value="-0.3" />
+    </Style>
+
+    <Style Selector="TextBlock.h3">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="TextBlock.subtle">
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style Selector="TextBlock.dim">
+        <Setter Property="Foreground" Value="{DynamicResource TextDim}" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style Selector="TextBlock.eyebrow">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="LetterSpacing" Value="2" />
+    </Style>
+
+    <!-- Card container — flat, no hover lift -->
     <Style Selector="Border.card">
         <Setter Property="Background" Value="{DynamicResource Surface1Brush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SurfaceBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Padding" Value="20" />
-        <Setter Property="RenderTransform" Value="translateY(0px)" />
-        <Setter Property="BoxShadow" Value="0 0 0 0 transparent" />
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="BorderBrush"        Duration="0:0:0.22" />
-                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="CubicEaseOut" />
-                <BoxShadowsTransition Property="BoxShadow"     Duration="0:0:0.22" />
-            </Transitions>
-        </Setter>
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="16" />
     </Style>
 
-    <Style Selector="Border.card:pointerover">
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrushMuted}" />
-        <Setter Property="RenderTransform" Value="translateY(-2px)" />
-        <Setter Property="BoxShadow" Value="0 6 24 0 #66000000" />
-    </Style>
-
-    <!-- Primary action button — subtle scale on press, color on hover -->
+    <!-- Primary action button -->
     <Style Selector="Button.primary">
         <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Padding" Value="18,10" />
         <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="RenderTransform" Value="scale(1)" />
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.15" />
-                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" Easing="CubicEaseOut" />
-            </Transitions>
-        </Setter>
-    </Style>
-
-    <Style Selector="Button.primary:pressed">
-        <Setter Property="RenderTransform" Value="scale(0.96)" />
     </Style>
 
     <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
@@ -68,80 +89,18 @@
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrushMuted}" />
     </Style>
 
-    <!-- Status dot -->
-    <Style Selector="Ellipse.statusDot">
-        <Setter Property="Width" Value="8" />
-        <Setter Property="Height" Value="8" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
-
-    <!-- Pulse animation for the topbar status dot when attached to game (alive indicator) -->
-    <Style Selector="Ellipse#StatusDot.alive">
-        <Style.Animations>
-            <Animation Duration="0:0:2" IterationCount="Infinite">
-                <KeyFrame Cue="0%">
-                    <Setter Property="Opacity" Value="1.0" />
-                </KeyFrame>
-                <KeyFrame Cue="50%">
-                    <Setter Property="Opacity" Value="0.45" />
-                </KeyFrame>
-                <KeyFrame Cue="100%">
-                    <Setter Property="Opacity" Value="1.0" />
-                </KeyFrame>
-            </Animation>
-        </Style.Animations>
-    </Style>
-
     <!-- Toggle switch tweaks -->
     <Style Selector="ToggleSwitch">
         <Setter Property="OnContent" Value="" />
         <Setter Property="OffContent" Value="" />
     </Style>
 
-    <!-- Slider track tint -->
-    <Style Selector="Slider /template/ Thumb">
-        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-    </Style>
-
-    <!-- Accent palette swatch: transparent ring by default, accent ring when .selected -->
+    <!-- Accent palette swatch -->
     <Style Selector="Border.accentSwatch">
         <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="BorderBrush" Duration="0:0:0.18" />
-            </Transitions>
-        </Setter>
     </Style>
 
     <Style Selector="Border.accentSwatch.selected">
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-    </Style>
-
-    <!-- Broken pill — flag a cheat as game-patched / non-functional -->
-    <Style Selector="Border.brokenPill">
-        <Setter Property="Background" Value="#33FF5555" />
-        <Setter Property="BorderBrush" Value="#FF5555" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="999" />
-        <Setter Property="Padding" Value="8,2" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
-
-    <Style Selector="Border.brokenPill > TextBlock">
-        <Setter Property="FontSize" Value="10" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="#FFB4B4" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
-
-    <!-- Broken card — dim look without losing readability; pointer signals disabled -->
-    <Style Selector="Border.card.broken">
-        <Setter Property="Opacity" Value="0.62" />
-    </Style>
-
-    <Style Selector="Border.card.broken:pointerover">
-        <Setter Property="BorderBrush" Value="{DynamicResource SurfaceBorderBrush}" />
-        <Setter Property="RenderTransform" Value="translateY(0px)" />
-        <Setter Property="BoxShadow" Value="0 0 0 0 transparent" />
     </Style>
 </Styles>

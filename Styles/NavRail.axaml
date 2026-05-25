@@ -1,59 +1,27 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Nav rail = ListBox with Classes="nav" — every ListBoxItem child gets the look -->
-    <Style Selector="ListBox.nav > ListBoxItem">
-        <Setter Property="Padding" Value="6,11" />
-        <Setter Property="Margin" Value="8,2" />
-        <Setter Property="CornerRadius" Value="10" />
+    <!-- Tab button — flat with accent underline when "not enabled" (i.e. selected) -->
+    <Style Selector="Button.tab">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
-        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.18" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.18" />
-            </Transitions>
-        </Setter>
-    </Style>
-
-    <Style Selector="ListBox.nav > ListBoxItem:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Surface2Brush}" />
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextPrimary}" />
-    </Style>
-
-    <Style Selector="ListBox.nav > ListBoxItem:selected /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Surface3Brush}" />
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextPrimary}" />
-    </Style>
-
-    <Style Selector="ListBox.nav > ListBoxItem:selected:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Surface3Brush}" />
-    </Style>
-
-    <!-- Accent bar on selected item — addressed via item template Border named SelectionBar -->
-    <Style Selector="ListBox.nav > ListBoxItem Border#SelectionBar">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Width" Value="3" />
-        <Setter Property="CornerRadius" Value="2" />
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.2" />
-            </Transitions>
-        </Setter>
-    </Style>
-
-    <Style Selector="ListBox.nav > ListBoxItem:selected Border#SelectionBar">
-        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-    </Style>
-
-    <!-- "Working" tabs (Unlocks, Database) — accent-tinted icon + semibold label -->
-    <Style Selector="ListBox.nav > ListBoxItem Grid.working materialIcons|MaterialIcon#NavIcon">
-        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
-    </Style>
-    <Style Selector="ListBox.nav > ListBoxItem Grid.working TextBlock#NavLabel">
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
+        <Setter Property="Padding" Value="16,10" />
         <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="CornerRadius" Value="0" />
+    </Style>
+
+    <Style Selector="Button.tab:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Surface2Brush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+
+    <!-- When selected (IsEnabled=false), show accent underline and primary text -->
+    <Style Selector="Button.tab:disabled">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="Background" Value="Transparent" />
     </Style>
 </Styles>

@@ -5,7 +5,7 @@
              x:DataType="vm:DatabaseViewModel">
 
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="28,24" Spacing="12">
+        <StackPanel Margin="20,14" Spacing="6">
 
             <!-- Quick action -->
             <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,4">
@@ -34,10 +34,10 @@
 
             <!-- Section: Toggle locks -->
             <TextBlock Text="PERSISTENT LOCKS (re-applied every 10s)" FontSize="11" FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextDim}" Margin="0,6,0,0" />
+                       Foreground="{DynamicResource TextDim}" Margin="0,4,0,0" />
 
             <!-- Free Cars -->
-            <Grid ColumnDefinitions="180,*,Auto" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*,Auto" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Free Cars (BaseCost=0)" VerticalAlignment="Center" FontSize="13" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
                     <Button Classes="ghost" Content="Apply once" Padding="10,4" FontSize="11"
@@ -51,7 +51,7 @@
             </Grid>
 
             <!-- Autoshow -->
-            <Grid ColumnDefinitions="180,*,Auto" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*,Auto" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Autoshow All Visible" VerticalAlignment="Center" FontSize="13" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
                     <Button Classes="ghost" Content="Apply once" Padding="10,4" FontSize="11"
@@ -65,7 +65,7 @@
             </Grid>
 
             <!-- Install Flags -->
-            <Grid ColumnDefinitions="180,*,Auto" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*,Auto" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Install Flags" VerticalAlignment="Center" FontSize="13" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
                     <Button Classes="ghost" Content="Apply once" Padding="10,4" FontSize="11"
@@ -80,10 +80,10 @@
 
             <!-- Section: One-shot actions -->
             <TextBlock Text="ONE-SHOT ACTIONS" FontSize="11" FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextDim}" Margin="0,6,0,0" />
+                       Foreground="{DynamicResource TextDim}" Margin="0,4,0,0" />
 
             <!-- Clear NEW Tag -->
-            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Clear NEW! Tag" VerticalAlignment="Center" FontSize="13" />
                 <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
                         HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
@@ -91,7 +91,7 @@
             </Grid>
 
             <!-- Add All Cars -->
-            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Add All Cars (free grant)" VerticalAlignment="Center" FontSize="13" />
                 <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
                         HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
@@ -99,7 +99,7 @@
             </Grid>
 
             <!-- Free Upgrades -->
-            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Free Upgrades (47 tables)" VerticalAlignment="Center" FontSize="13" />
                 <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
                         HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
@@ -107,7 +107,7 @@
             </Grid>
 
             <!-- Free Wheels -->
-            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Free Wheels" VerticalAlignment="Center" FontSize="13" />
                 <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
                         HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
@@ -115,7 +115,7 @@
             </Grid>
 
             <!-- Unlock Upgrade Presets -->
-            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Unlock Upgrade Presets" VerticalAlignment="Center" FontSize="13" />
                 <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
                         HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
@@ -123,7 +123,7 @@
             </Grid>
 
             <!-- Full Autoshow (CarBuckets) -->
-            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Full Autoshow (CarBuckets)" VerticalAlignment="Center" FontSize="13" />
                 <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
                         HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
@@ -132,10 +132,10 @@
 
             <!-- Section: Physics & Performance (SQL) -->
             <TextBlock Text="PHYSICS &amp; PERFORMANCE (SQL)" FontSize="11" FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextDim}" Margin="0,6,0,0" />
+                       Foreground="{DynamicResource TextDim}" Margin="0,4,0,0" />
 
             <!-- Drift Score Scalar -->
-            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Drift Score 10x" VerticalAlignment="Center" FontSize="13" />
                 <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
                         HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
@@ -144,7 +144,7 @@
             </Grid>
 
             <!-- Max Traction -->
-            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Max Traction (Grip)" VerticalAlignment="Center" FontSize="13" />
                 <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
                         HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
@@ -153,7 +153,7 @@
             </Grid>
 
             <!-- Torque Scale -->
-            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Torque Scale 2x" VerticalAlignment="Center" FontSize="13" />
                 <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
                         HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"
@@ -162,7 +162,7 @@
             </Grid>
 
             <!-- Drag Scale -->
-            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="34">
+            <Grid ColumnDefinitions="180,*" ColumnSpacing="8" Height="28">
                 <TextBlock Grid.Column="0" Text="Reduce Drag 0.5x" VerticalAlignment="Center" FontSize="13" />
                 <Button Grid.Column="1" Classes="ghost" Content="Apply" Padding="10,4" FontSize="11"
                         HorizontalAlignment="Left" IsEnabled="{Binding CanToggle}"

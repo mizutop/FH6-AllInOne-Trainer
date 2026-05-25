@@ -8,39 +8,15 @@ An all-in-one trainer for **Forza Horizon 6** — runtime hooks for player profi
 
 Latest release: **[GitHub Releases](../../releases)** — download the `.zip`, extract, and run `FH6AllInOneTrainer.exe` as Administrator.
 
-## Community-Tested Status
-
-Based on community reports (Steam version). **Your results may vary by game version.**
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| SQL: Free Cars, Free Upgrades, Autoshow | Working | Database writes, reliable |
-| SQL: Drift 10x, Torque 2x, Grip, Drag | Untested | New physics SQL cheats |
-| Credits, Wheelspins, Super Wheelspins | Working | FNV direct-write (no CRC bypass); falls back to NOP-sled |
-| Skill Points | Working | FNV direct-write; falls back to NOP-sled |
-| Freeze AI | Working | Signature verified across builds |
-| Drift Score Multiplier | Working | Community confirmed |
-| Teleport, Gravity, Time of Day | Working | Signatures match across builds |
-| Sell Payout, Skill Score, Prize Scale | Working | Signatures match across builds |
-| Acceleration, Race/Mission Time | Working | Signatures match across builds |
-| Speed Trap, Remove Build Cap, Free Clothing | Working | Signatures match across builds |
-| NoClip | Broken | Hooks wrong function |
-| No Skill Break | Working | Alt signatures + context validation |
-| XP Override | Broken | No known working approach |
-| Add All Cars | Partial | Only adds DLC cars (not all 721) |
-
-If a cheat says "signature not found", your game build may differ. Use the **Signature Scan** in Settings to check compatibility.
-
 ## Features
 
 ### Quick Actions
-- **Quick Start** — Free Cars + Autoshow Unlock + Install Flags + All Cars, one click
+- **Quick Start** — 999M Credits + Free Cars + Autoshow Unlock + Install Flags + All Cars
 - **Max All** — max Credits, Wheelspins, Super Wheelspins, Skill Points
 
-### Profile Values (FNV direct-write)
-- Credits, Wheelspins, Super Wheelspins, Skill Points
-- Writes directly to profile struct in heap memory — no `.text` modification, no CRC bypass needed for these 4 cheats
-- Falls back to NOP-sled if struct resolution fails
+### Profile Values (code cave detours)
+- Credits, Wheelspins, Super Wheelspins, Skill Points, Sell Payout
+- Uses inline code cave hooks with toggle+value slots — the same approach used by ForzaMods AIO, Vynxly/FH6-Booster, and other trainers
 
 ### Racing & World
 - Freeze AI, Teleport, Gravity, No Water Drag, Time of Day, Acceleration, Free Clothing
@@ -56,17 +32,18 @@ If a cheat says "signature not found", your game build may differ. Use the **Sig
 - Free Cars (LOCK), Autoshow (LOCK), Install Flags (LOCK)
 - Add All Cars, Free Upgrades (47 tables), Free Wheels, Full Autoshow
 - Unlock Upgrade Presets
+- Clear "NEW!" Tag
 
 ### Physics & Performance (SQL)
 - Drift Score 10x, Max Traction, Torque 2x, Reduce Drag
 
 ## Anti-Cheat Bypass
 
-- CRC bypass with 5s heartbeat + jitter (only needed for non-profile cheats)
-- FNV-1a direct struct writes for profile fields (no CRC bypass needed)
+- CRC bypass with 5s heartbeat + jitter (XXH check pointer replacement)
 - Value Encryption bypass (RET at encryption prologue)
 - 5 integrity check patches
 - Thread-safe patching with ExpectedOriginal sanity check
+- Pre-resolution: all hook targets are scanned before any hooks are installed
 
 ## Signature System
 
@@ -92,7 +69,7 @@ dotnet publish -c Release -r win-x64 --self-contained
 | **[Omkmakwana](https://github.com/Omkmakwana/FH6Trainer)** | NOP-sled approach, Add All Cars |
 | **[matkhl](https://www.unknowncheats.me/forum/other-games/752793)** | Free Upgrades SQL (47 tables), database dumper |
 | **[Chaarkor](https://github.com/Chaarkoor)** | Original Avalonia UI shell, MVVM architecture |
-| **[changcheng967](https://github.com/changcheng967)** | All-in-one improvements, physics SQL cheats, FNV direct-write |
+| **[changcheng967](https://github.com/changcheng967)** | All-in-one improvements, physics SQL cheats, code cave detours |
 
 ## License
 

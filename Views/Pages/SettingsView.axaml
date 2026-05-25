@@ -1,311 +1,120 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:vm="using:FH6Mod.ViewModels.Pages"
-             xmlns:b="using:FH6Mod.Behaviors"
              x:Class="FH6Mod.Views.Pages.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="36,28" Spacing="24" b:StaggerEntrance.Enable="True">
-
-            <!-- Header -->
-            <StackPanel Spacing="6">
-                <StackPanel Orientation="Horizontal" Spacing="14">
-                    <Border Background="{DynamicResource Surface2Brush}"
-                            BorderBrush="{DynamicResource SurfaceBorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="10"
-                            Padding="10">
-                        <materialIcons:MaterialIcon Kind="{Binding PageIcon}" Width="22" Height="22"
-                                                    Foreground="{DynamicResource AccentBrush}" />
-                    </Border>
-                    <StackPanel VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Text="{Binding PageTitle}" Classes="h1" />
-                        <TextBlock Text="{Binding PageSubtitle}" Classes="subtle" />
-                    </StackPanel>
-                </StackPanel>
-            </StackPanel>
+        <StackPanel Margin="20,14" Spacing="12">
 
             <!-- PREFERENCES -->
-            <StackPanel Spacing="10">
-                <TextBlock Text="PREFERENCES" Classes="eyebrow" />
-                <Border Classes="card" Padding="22">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-                        <Border Grid.Column="0" Width="42" Height="42" CornerRadius="10" Background="{DynamicResource Surface2Brush}">
-                            <materialIcons:MaterialIcon Kind="MotionPlayOutline" Width="22" Height="22"
-                                Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                            <TextBlock Text="UI animations" Classes="h3" />
-                            <TextBlock Text="Card stagger entrance, hover lift, status pulse, page transitions. Saved to disk — kept across launches." Classes="dim" TextWrapping="Wrap" />
-                        </StackPanel>
-                        <ToggleSwitch Grid.Column="2" VerticalAlignment="Center"
-                                      IsChecked="{Binding AnimationsEnabled, Mode=TwoWay}" />
-                    </Grid>
-                </Border>
+            <TextBlock Text="PREFERENCES" Classes="eyebrow" />
 
-                <!-- Mouse hover glow toggle -->
-                <Border Classes="card" Padding="22">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-                        <Border Grid.Column="0" Width="42" Height="42" CornerRadius="10" Background="{DynamicResource Surface2Brush}">
-                            <materialIcons:MaterialIcon Kind="CursorPointer" Width="22" Height="22"
-                                Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                            <TextBlock Text="Mouse hover glow" Classes="h3" />
-                            <TextBlock Text="A soft radial gradient in the accent colour follows your cursor. Disable on weak GPUs if you notice frame drops." Classes="dim" TextWrapping="Wrap" />
-                        </StackPanel>
-                        <ToggleSwitch Grid.Column="2" VerticalAlignment="Center"
-                                      IsChecked="{Binding MouseGlowEnabled, Mode=TwoWay}" />
-                    </Grid>
-                </Border>
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Height="28">
+                <TextBlock Grid.Column="0" Text="UI animations" VerticalAlignment="Center" FontSize="13" />
+                <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              IsChecked="{Binding AnimationsEnabled, Mode=TwoWay}" />
+            </Grid>
 
-                <!-- Where prefs live -->
-                <Border Classes="card" Padding="22">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-                        <Border Grid.Column="0" Width="42" Height="42" CornerRadius="10" Background="{DynamicResource Surface2Brush}">
-                            <materialIcons:MaterialIcon Kind="FolderCogOutline" Width="22" Height="22"
-                                Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                            <TextBlock Text="Preferences are saved to" Classes="h3" />
-                            <TextBlock Text="{Binding SettingsPath}" Classes="dim" TextWrapping="Wrap"
-                                       FontFamily="Consolas, Courier New, monospace" />
-                        </StackPanel>
-                        <Button Grid.Column="2" Classes="ghost" Content="Open folder"
-                                VerticalAlignment="Center"
-                                Command="{Binding OpenSettingsFolderCommand}" />
-                    </Grid>
-                </Border>
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Height="28">
+                <TextBlock Grid.Column="0" Text="Mouse hover glow" VerticalAlignment="Center" FontSize="13" />
+                <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              IsChecked="{Binding MouseGlowEnabled, Mode=TwoWay}" />
+            </Grid>
 
-                <!-- Accent color picker -->
-                <Border Classes="card" Padding="22">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-                        <Border Grid.Column="0" Width="42" Height="42" CornerRadius="10" Background="{DynamicResource Surface2Brush}">
-                            <materialIcons:MaterialIcon Kind="PaletteOutline" Width="22" Height="22"
-                                Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <StackPanel Grid.Column="1" Spacing="10">
-                            <StackPanel Spacing="2">
-                                <TextBlock Text="Accent color" Classes="h3" />
-                                <TextBlock Classes="dim" TextWrapping="Wrap">
-                                    <Run Text="Pick a palette — applies instantly everywhere. Currently:" />
-                                    <Run Text="{Binding SelectedAccentName}" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold" />
-                                </TextBlock>
-                            </StackPanel>
-                            <ItemsControl ItemsSource="{Binding AccentOptions}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:AccentItemVm">
-                                        <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                                Margin="0,0,10,10" Cursor="Hand"
-                                                ToolTip.Tip="{Binding Name}"
-                                                Click="OnAccentSwatchClick">
-                                            <Border Classes="accentSwatch"
-                                                    Classes.selected="{Binding IsSelected}"
-                                                    Width="40" Height="40" CornerRadius="999"
-                                                    BorderThickness="2" Padding="3">
-                                                <Border CornerRadius="999"
-                                                        Background="{Binding Base, Converter={StaticResource HexToBrushConverter}}" />
-                                            </Border>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+            <!-- Accent color -->
+            <StackPanel Spacing="6">
+                <TextBlock Text="Accent color" FontSize="13" VerticalAlignment="Center" />
+                <ItemsControl ItemsSource="{Binding AccentOptions}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:AccentItemVm">
+                            <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                    Margin="0,0,8,8" Cursor="Hand"
+                                    ToolTip.Tip="{Binding Name}"
+                                    Click="OnAccentSwatchClick">
+                                <Border Classes="accentSwatch"
+                                        Classes.selected="{Binding IsSelected}"
+                                        Width="32" Height="32" CornerRadius="999"
+                                        BorderThickness="2" Padding="3">
+                                    <Border CornerRadius="999"
+                                            Background="{Binding Base, Converter={StaticResource HexToBrushConverter}}" />
+                                </Border>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
 
             <!-- DIAGNOSTICS -->
-            <StackPanel Spacing="10">
-                <TextBlock Text="DIAGNOSTICS" Classes="eyebrow" />
+            <TextBlock Text="DIAGNOSTICS" Classes="eyebrow" Margin="0,4,0,0" />
 
-                <!-- Signature scan -->
-                <Border Classes="card" Padding="22">
-                    <StackPanel Spacing="12">
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-                            <Border Grid.Column="0" Width="42" Height="42" CornerRadius="10" Background="{DynamicResource Surface2Brush}">
-                                <materialIcons:MaterialIcon Kind="MagnifyScan" Width="22" Height="22"
-                                    Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="Signature scan" Classes="h3" />
-                                <TextBlock Text="Test all AOB patterns against the current FH6 binary without installing hooks. Requires FH6 running." Classes="dim" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Grid>
-                        <Button Content="Scan All Signatures" Classes="primary"
-                                HorizontalAlignment="Left"
-                                IsEnabled="{Binding !IsScanning}"
-                                Command="{Binding ScanSignaturesCommand}" />
-                        <TextBox Text="{Binding ScanStatus}" IsReadOnly="True"
-                                 FontFamily="Consolas, Courier New, monospace" FontSize="12"
-                                 TextWrapping="Wrap" IsVisible="{Binding ScanStatus, Converter={StaticResource NotNullConverter}}"
-                                 MaxHeight="300" />
-                    </StackPanel>
-                </Border>
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Height="28">
+                <TextBlock Grid.Column="0" Text="Signature scan" VerticalAlignment="Center" FontSize="13" />
+                <Button Grid.Column="1" Content="Scan All" Classes="primary" Padding="12,4" FontSize="11"
+                        IsEnabled="{Binding !IsScanning}"
+                        Command="{Binding ScanSignaturesCommand}" />
+            </Grid>
+            <TextBox Text="{Binding ScanStatus}" IsReadOnly="True"
+                     FontFamily="Consolas, Courier New, monospace" FontSize="11"
+                     TextWrapping="Wrap" IsVisible="{Binding ScanStatus, Converter={StaticResource NotNullConverter}}"
+                     MaxHeight="200" />
 
-                <!-- Conflict detection -->
-                <Border Classes="card" Padding="22">
-                    <StackPanel Spacing="12">
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-                            <Border Grid.Column="0" Width="42" Height="42" CornerRadius="10" Background="{DynamicResource Surface2Brush}">
-                                <materialIcons:MaterialIcon Kind="ShieldAlertOutline" Width="22" Height="22"
-                                    Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="Conflict detection" Classes="h3" />
-                                <TextBlock Text="Check for other trainers (ForzaMods AIO, WeMod, etc.) that might conflict with this one." Classes="dim" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Grid>
-                        <Button Content="Detect Conflicts" Classes="primary"
-                                HorizontalAlignment="Left"
-                                Command="{Binding DetectConflictsCommand}" />
-                        <Border IsVisible="{Binding HasConflicts}" Background="#33FF4444" CornerRadius="8" Padding="12">
-                            <TextBlock Text="{Binding ConflictStatus}" TextWrapping="Wrap"
-                                       Foreground="#FF6666" FontFamily="Consolas, Courier New, monospace" FontSize="12" />
-                        </Border>
-                        <Border IsVisible="{Binding ConflictStatus, Converter={StaticResource NotNullConverter}}" Background="{DynamicResource Surface2Brush}" CornerRadius="8" Padding="12">
-                            <TextBlock Text="{Binding ConflictStatus}" TextWrapping="Wrap"
-                                       Foreground="{DynamicResource TextSecondary}" FontFamily="Consolas, Courier New, monospace" FontSize="12" />
-                        </Border>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-
-            <!-- PROFILES -->
-            <StackPanel Spacing="10">
-                <TextBlock Text="CHEAT PROFILES" Classes="eyebrow" />
-
-                <Border Classes="card" Padding="22">
-                    <StackPanel Spacing="12">
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-                            <Border Grid.Column="0" Width="42" Height="42" CornerRadius="10" Background="{DynamicResource Surface2Brush}">
-                                <materialIcons:MaterialIcon Kind="ContentSaveOutline" Width="22" Height="22"
-                                    Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="Save &amp; load profiles" Classes="h3" />
-                                <TextBlock Text="Save your current cheat setup to a named profile. Load it later to quickly restore your favourite configuration." Classes="dim" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Save new profile -->
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                            <TextBox PlaceholderText="Profile name..." Text="{Binding ProfileName, Mode=TwoWay}" />
-                            <Button Grid.Column="1" Content="Save" Classes="primary"
-                                    Command="{Binding SaveProfileCommand}" />
-                        </Grid>
-
-                        <!-- Load / Delete -->
-                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-                            <ComboBox ItemsSource="{Binding SavedProfiles}"
-                                      SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
-                                      PlaceholderText="Saved profiles..." />
-                            <Button Grid.Column="1" Content="Load" Classes="ghost"
-                                    Command="{Binding LoadProfileCommand}" />
-                            <Button Grid.Column="2" Content="Delete" Classes="ghost"
-                                    Command="{Binding DeleteProfileCommand}" />
-                        </Grid>
-
-                        <Button Content="Open profiles folder" Classes="ghost"
-                                HorizontalAlignment="Left"
-                                Command="{Binding OpenProfilesFolderCommand}" />
-
-                        <TextBlock Text="{Binding ProfileStatus}" Classes="dim" TextWrapping="Wrap"
-                                   IsVisible="{Binding ProfileStatus, Converter={StaticResource NotNullConverter}}" />
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-
-            <!-- ABOUT / CREDITS hero card -->
-            <Border Classes="card" Padding="28">
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="22">
-                    <Border Grid.Column="0" Width="96" Height="96" CornerRadius="20" ClipToBounds="True">
-                        <Image Source="/Assets/logo.png" Stretch="UniformToFill" />
-                    </Border>
-
-                    <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
-                        <TextBlock Text="FH6 ALL-IN-ONE TRAINER" Classes="eyebrow" />
-                        <TextBlock Text="All-in-One Trainer" FontSize="28" FontWeight="Bold"
-                                   Foreground="{DynamicResource TextPrimary}" />
-                        <TextBlock Text="Credits, wheelspins, skill points, free cars — all in one place."
-                                   Classes="subtle" TextWrapping="Wrap" />
-                        <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
-                            <Border Background="{DynamicResource Surface2Brush}"
-                                    CornerRadius="999" Padding="10,4">
-                                <TextBlock Text="v4.8.0  ·  GPL-3.0" FontSize="11"
-                                           Foreground="{DynamicResource TextSecondary}" />
-                            </Border>
-                            <Border Background="{DynamicResource Surface2Brush}"
-                                    CornerRadius="999" Padding="10,4">
-                                <TextBlock Text=".NET 10  ·  Avalonia 12" FontSize="11"
-                                           Foreground="{DynamicResource TextSecondary}" />
-                            </Border>
-                        </StackPanel>
-                    </StackPanel>
-                </Grid>
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Height="28">
+                <TextBlock Grid.Column="0" Text="Conflict detection" VerticalAlignment="Center" FontSize="13" />
+                <Button Grid.Column="1" Content="Detect" Classes="primary" Padding="12,4" FontSize="11"
+                        Command="{Binding DetectConflictsCommand}" />
+            </Grid>
+            <Border IsVisible="{Binding HasConflicts}" Background="#33FF4444" CornerRadius="6" Padding="8,4">
+                <TextBlock Text="{Binding ConflictStatus}" TextWrapping="Wrap"
+                           Foreground="#FF6666" FontFamily="Consolas, Courier New, monospace" FontSize="11" />
+            </Border>
+            <Border IsVisible="{Binding ConflictStatus, Converter={StaticResource NotNullConverter}}"
+                    Background="{DynamicResource Surface2Brush}" CornerRadius="6" Padding="8,4">
+                <TextBlock Text="{Binding ConflictStatus}" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextSecondary}" FontFamily="Consolas, Courier New, monospace" FontSize="11" />
             </Border>
 
-            <!-- CREDITS & THANKS -->
-            <StackPanel Spacing="10">
-                <TextBlock Text="CREDITS &amp; THANKS" Classes="eyebrow" />
+            <!-- PROFILES -->
+            <TextBlock Text="CHEAT PROFILES" Classes="eyebrow" Margin="0,4,0,0" />
 
-                <Border Classes="card" Padding="22">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10"
-                                Background="{DynamicResource Surface2Brush}">
-                            <materialIcons:MaterialIcon Kind="Heart" Width="22" Height="22"
-                                                        Foreground="{DynamicResource AccentBrush}"
-                                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Classes="h3">
-                                <Run Text="paris' club" Foreground="{DynamicResource AccentBrush}" />
-                                <Run Text=" — the actual mods" Foreground="{DynamicResource TextPrimary}" />
-                            </TextBlock>
-                            <TextBlock TextWrapping="Wrap" Classes="dim"
-                                       Text="All core cheats by paris' club: runtime hooks, SQL features, CRC bypass, code caves, memory injection. Original UI shell by Chaarkor. All-in-one improvements by changcheng967: Max All, Unlock Everything, Quick Start, preset buttons." />
-                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
-                                <Border Background="{DynamicResource Surface2Brush}" CornerRadius="999" Padding="8,3">
-                                    <TextBlock Text="discord.gg/WSd3bRNJuJ" FontSize="11"
-                                               Foreground="{DynamicResource TextSecondary}" />
-                                </Border>
-                            </StackPanel>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Height="28">
+                <TextBox Grid.Column="0" PlaceholderText="Profile name..." Text="{Binding ProfileName, Mode=TwoWay}" />
+                <Button Grid.Column="1" Content="Save" Classes="primary" Padding="12,4" FontSize="11"
+                        Command="{Binding SaveProfileCommand}" />
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Height="28">
+                <ComboBox Grid.Column="0" ItemsSource="{Binding SavedProfiles}"
+                          SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
+                          PlaceholderText="Saved profiles..." />
+                <Button Grid.Column="1" Content="Load" Classes="ghost" Padding="10,4" FontSize="11"
+                        Command="{Binding LoadProfileCommand}" />
+                <Button Grid.Column="2" Content="Delete" Classes="ghost" Padding="10,4" FontSize="11"
+                        Command="{Binding DeleteProfileCommand}" />
+            </Grid>
+            <Button Content="Open profiles folder" Classes="ghost" Padding="10,4" FontSize="11"
+                    HorizontalAlignment="Left"
+                    Command="{Binding OpenProfilesFolderCommand}" />
+            <TextBlock Text="{Binding ProfileStatus}" Classes="dim" TextWrapping="Wrap"
+                       IsVisible="{Binding ProfileStatus, Converter={StaticResource NotNullConverter}}" />
 
-                <Border Classes="card" Padding="22">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10"
-                                Background="{DynamicResource Surface2Brush}">
-                            <materialIcons:MaterialIcon Kind="LightningBolt" Width="22" Height="22"
-                                                        Foreground="{DynamicResource AccentBrush}"
-                                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Classes="h3">
-                                <Run Text="Reloaded.Memory" Foreground="{DynamicResource AccentBrush}" />
-                                <Run Text=" — SIMD-accelerated AOB scanner" Foreground="{DynamicResource TextPrimary}" />
-                            </TextBlock>
-                            <TextBlock TextWrapping="Wrap" Classes="dim"
-                                       Text="Ultra-fast AOB scanner used by the memory engine — scans the 49 MB FH6 binary in milliseconds." />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </StackPanel>
+            <Button Content="Open settings folder" Classes="ghost" Padding="10,4" FontSize="11"
+                    HorizontalAlignment="Left"
+                    Command="{Binding OpenSettingsFolderCommand}" />
 
-            <!-- Footer -->
-            <TextBlock Classes="dim" TextAlignment="Center" Margin="0,12" TextWrapping="Wrap">
-                <Run Text="Improved by " />
-                <Run Text="All-in-One Trainer" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold" />
-                <Run Text=" · original UI by Chaarkor, cheats by paris' club, improvements by changcheng967 · 2026 · GPL-3.0" />
+            <!-- ABOUT -->
+            <TextBlock Text="ABOUT" Classes="eyebrow" Margin="0,4,0,0" />
+            <TextBlock Classes="dim" TextWrapping="Wrap" FontSize="12">
+                <Run Text="FH6 All-in-One Trainer · " />
+                <Run Text="{Binding VersionText}" />
+                <Run Text=" · GPL-3.0 · .NET 10 · Avalonia 12" />
+            </TextBlock>
+            <TextBlock Classes="dim" TextWrapping="Wrap" FontSize="12">
+                Cheats by paris' club · UI by Chaarkor · Improvements by changcheng967 · discord.gg/WSd3bRNJuJ
             </TextBlock>
         </StackPanel>
     </ScrollViewer>
