@@ -1,7 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:FH6Mod.ViewModels.Pages"
-             xmlns:mi="using:Material.Icons.Avalonia"
              x:Class="FH6Mod.Views.Pages.UnlocksView"
              x:DataType="vm:UnlocksViewModel">
 
@@ -43,14 +42,9 @@
                        Foreground="{DynamicResource TextDim}" Margin="0,6,0,0" />
 
             <!-- Credits -->
-            <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="8" Height="28">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                    <TextBlock Text="Credits (CR)" FontSize="13" />
-                    <mi:MaterialIcon Kind="InformationOutline" Width="15" Height="15"
-                                     Foreground="#FF64B5F6"
-                                     ToolTip.Tip="Toggle on, then reopen the Credits tab in-game to see the updated value" />
-                </StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+            <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="8">
+                <TextBlock Grid.Column="0" Text="Credits (CR)" VerticalAlignment="Center" FontSize="13" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                     <TextBox Text="{Binding CreditsAmountText}" Width="100" VerticalAlignment="Center" />
                     <Button Classes="ghost" Content="10K" Padding="6,4" FontSize="11" Command="{Binding SetCreditsCommand}" CommandParameter="10000" />
                     <Button Classes="ghost" Content="100K" Padding="6,4" FontSize="11" Command="{Binding SetCreditsCommand}" CommandParameter="100000" />
@@ -64,15 +58,12 @@
                               IsEnabled="{Binding CanToggle}"
                               Command="{Binding ToggleCreditsCommand}" />
             </Grid>
+            <TextBlock Text="Toggle on, then reopen the Credits tab to see the updated value."
+                       FontSize="11" Foreground="#FF64B5F6" Margin="158,0,0,0" />
 
             <!-- Wheelspins -->
-            <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="8" Height="28">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                    <TextBlock Text="Wheelspins" FontSize="13" />
-                    <mi:MaterialIcon Kind="InformationOutline" Width="15" Height="15"
-                                     Foreground="#FF64B5F6"
-                                     ToolTip.Tip="Toggle on, then do one spin. Count locks to your value — game won't show it until you spin." />
-                </StackPanel>
+            <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="8">
+                <TextBlock Grid.Column="0" Text="Wheelspins" VerticalAlignment="Center" FontSize="13" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
                     <TextBox Text="{Binding WheelspinsAmountText}" Width="70" VerticalAlignment="Center" />
                     <Button Classes="ghost" Content="10" Padding="6,4" FontSize="11" Command="{Binding SetWheelspinsCommand}" CommandParameter="10" />
@@ -86,15 +77,12 @@
                               IsEnabled="{Binding CanToggle}"
                               Command="{Binding ToggleWheelspinsCommand}" />
             </Grid>
+            <TextBlock Text="💡 Toggle on, then spin once. Count locks to your value — game won't show it until you spin."
+                       FontSize="11" Foreground="#FF64B5F6" Margin="158,0,0,0" />
 
             <!-- Super Wheelspins -->
-            <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="8" Height="28">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                    <TextBlock Text="Super Wheelspins" FontSize="13" />
-                    <mi:MaterialIcon Kind="InformationOutline" Width="15" Height="15"
-                                     Foreground="#FF64B5F6"
-                                     ToolTip.Tip="Toggle on, then do one spin. Count locks to your value — game won't show it until you spin." />
-                </StackPanel>
+            <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="8">
+                <TextBlock Grid.Column="0" Text="Super Wheelspins" VerticalAlignment="Center" FontSize="13" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
                     <TextBox Text="{Binding SuperWheelspinsAmountText}" Width="70" VerticalAlignment="Center" />
                     <Button Classes="ghost" Content="10" Padding="6,4" FontSize="11" Command="{Binding SetSuperWheelspinsCommand}" CommandParameter="10" />
@@ -108,15 +96,12 @@
                               IsEnabled="{Binding CanToggle}"
                               Command="{Binding ToggleSuperWheelspinsCommand}" />
             </Grid>
+            <TextBlock Text="💡 Toggle on, then spin once. Count locks to your value — game won't show it until you spin."
+                       FontSize="11" Foreground="#FF64B5F6" Margin="158,0,0,0" />
 
             <!-- Skill Points -->
-            <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="8" Height="28">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                    <TextBlock Text="Skill Points" FontSize="13" />
-                    <mi:MaterialIcon Kind="InformationOutline" Width="15" Height="15"
-                                     Foreground="#FF64B5F6"
-                                     ToolTip.Tip="Toggle on, then spend a point for the change to take effect." />
-                </StackPanel>
+            <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="8">
+                <TextBlock Grid.Column="0" Text="Skill Points" VerticalAlignment="Center" FontSize="13" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
                     <TextBox Text="{Binding SkillPointsAmountText}" Width="90" VerticalAlignment="Center" />
                     <Button Classes="ghost" Content="100" Padding="6,4" FontSize="11" Command="{Binding SetSkillPointsCommand}" CommandParameter="100" />
@@ -130,6 +115,8 @@
                               IsEnabled="{Binding CanToggle}"
                               Command="{Binding ToggleSkillPointsCommand}" />
             </Grid>
+            <TextBlock Text="💡 Toggle on, then spend a point for the change to take effect."
+                       FontSize="11" Foreground="#FF64B5F6" Margin="158,0,0,0" />
 
             <!-- Sell Payout -->
             <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="8" Height="28">
