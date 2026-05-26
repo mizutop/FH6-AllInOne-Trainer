@@ -13,14 +13,3 @@ updates:
       include: "scope"
     reviewers:
       - "changcheng967"
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    labels:
-      - "dependencies"
-      - "ci"
-    commit-message:
-      prefix: "ci"
-      include: "scope"
