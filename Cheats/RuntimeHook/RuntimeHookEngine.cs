@@ -789,6 +789,15 @@ public sealed class RuntimeHookEngine : IDisposable
              13, 2,
              [0x74],       // JZ
              [0x90]),      // NOP
+
+            // 6. TerminateProcess guard: CALL [RAX+0x128] / TEST AL,AL / JZ skip / MOV ECX,-1 / CALL[IAT]
+            // The vtable call returns "ok to terminate" flag — if non-zero, game kills itself.
+            // Patch JZ → JMP so TerminateProcess is always skipped.
+            ("TerminateGuard",
+             "FF 90 28 01 00 00 84 C0 74 0B B9 FF FF FF FF FF 15",
+             8, 2,
+             [0x74],       // JZ
+             [0xEB]),      // JMP (always skip TerminateProcess)
         };
 
         foreach (var (name, sig, patchOffset, patchLen, expected, replace) in bypasses)
@@ -839,7 +848,7 @@ public sealed class RuntimeHookEngine : IDisposable
             }
             catch (Exception ex) { L($"Integrity bypass {name} failed: {ex.Message}"); }
         }
-        L($"Integrity bypasses applied: {_integrityPatches.Count}/5 (pending: {_pendingBypasses.Count})");
+        L($"Integrity bypasses applied: {_integrityPatches.Count}/6 (pending: {_pendingBypasses.Count})");
     }
 
     /// <summary>
