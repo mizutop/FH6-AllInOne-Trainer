@@ -46,7 +46,6 @@ public sealed class RuntimeHookEngine : IDisposable
         public ulong Address;
         public byte[] Original;
         public byte[] Replacement;
-        public bool Permanent;
     }
 
     // Value Encryption bypass — writes RET at the encryption function so values stay plaintext
@@ -991,12 +990,10 @@ public sealed class RuntimeHookEngine : IDisposable
                         for (var i = 0; i < patchLen; i++) patch[i] = 0x90;
                     }
 
-                    // Patches 6-10 prevent game shutdown/reboot — they must stay active
-                    // even during the CRC clean window so PlayFab's OnResume handler
-                    // can't trigger a reboot while our guard is down.
-                    var permanent = name is "TerminateGuard" or "ResumeReboot"
-                        or "PlayFabRunReinit" or "PlayFabReboot1" or "PlayFabReboot2";
-
+                    // All patches are permanent. The CRC timer toggles only cheat hooks
+                    // and the CRC pointer — integrity checks stay bypassed at all times
+                    // so the restored CRC function sees "pass" on every check, even though
+                    // PlayFab / shutdown-blocker patches are still applied in .text.
                     WriteProtectedBytes(addr, patch);
                     _integrityPatches.Add(new IntegrityPatch
                     {
@@ -1004,7 +1001,6 @@ public sealed class RuntimeHookEngine : IDisposable
                         Address = addr,
                         Original = current,
                         Replacement = patch,
-                        Permanent = permanent,
                     });
                     L($"Integrity bypass: {name} patched at 0x{addr:X}");
                     found = true;
@@ -1113,8 +1109,7 @@ public sealed class RuntimeHookEngine : IDisposable
 
             var tickStart = Environment.TickCount64;
             var hookCount = _hooks.Count;
-            var patchCount = _integrityPatches.Count(ip => !ip.Permanent);
-            var permCount = _integrityPatches.Count(ip => ip.Permanent);
+            var permCount = _integrityPatches.Count;
 
             // Phase 1: restore originals atomically (all threads suspended)
             lock (_lock)
@@ -1138,16 +1133,9 @@ public sealed class RuntimeHookEngine : IDisposable
                     }
                     if (!p1ProcessDead)
                     {
-                        foreach (var ip in _integrityPatches)
-                        {
-                            if (ip.Permanent) continue; // never restore shutdown-blockers
-                            try { WriteProtectedBytes(ip.Address, ip.Original); }
-                            catch (Exception ex)
-                            {
-                                L($"CRC p1 restore bypass {ip.Name} failed: {ex.Message}");
-                                if (IsProcessDead()) { p1ProcessDead = true; break; }
-                            }
-                        }
+                        // All integrity patches are permanent — never restored.
+                        // The CRC function runs during the clean window but every
+                        // check it calls is already patched to return "pass".
                     }
                     if (!p1ProcessDead)
                     {
@@ -1155,7 +1143,7 @@ public sealed class RuntimeHookEngine : IDisposable
                         catch (Exception ex) { L($"CRC p1 restore CRC pointer failed: {ex.Message}"); }
                     }
                     sw.Stop();
-                    L($"CRC tick: p1 restore done in {sw.ElapsedMilliseconds}ms (suspended {threads.Count} threads, {hookCount} hooks, {patchCount} toggled + {permCount} permanent, {p1Fails} hook failures)");
+                    L($"CRC tick: p1 restore done in {sw.ElapsedMilliseconds}ms (suspended {threads.Count} threads, {hookCount} hooks, {permCount} permanent patches, {p1Fails} hook failures)");
 
                     // Spike detection: if p1 took too long, abort the tick.
                     // Originals are restored — this is the safest state. Don't re-apply patches.
@@ -1203,12 +1191,7 @@ public sealed class RuntimeHookEngine : IDisposable
                     }
                     if (!p2ProcessDead)
                     {
-                        foreach (var ip in _integrityPatches)
-                        {
-                            if (ip.Permanent) continue; // already applied, never toggled
-                            try { WriteProtectedBytes(ip.Address, ip.Replacement); }
-                            catch (Exception ex) { L($"CRC p2 re-apply bypass {ip.Name} failed: {ex.Message}"); if (IsProcessDead()) { p2ProcessDead = true; break; } }
-                        }
+                        // All integrity patches are permanent — no re-apply needed.
                     }
                     if (!p2ProcessDead)
                     {
