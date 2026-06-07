@@ -16,6 +16,11 @@ public sealed class RuntimeHookEngine : IDisposable
     private readonly object _lock = new();
     private readonly Dictionary<string, RuntimeDetour> _hooks = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<ulong> _hookedAddresses = new();
+
+    // Season entity capture hook
+    private ulong _seasonCaveAddr;
+    private ulong _seasonEntityStorageAddr;
+    private bool _seasonHookInstalled;
     private readonly Dictionary<string, ulong> _preResolvedTargets = new(StringComparer.OrdinalIgnoreCase);
     private bool _preResolved;
 
@@ -160,6 +165,17 @@ public sealed class RuntimeHookEngine : IDisposable
     public void   WriteBytesPublic(ulong addr, byte[] data) => WriteBytes(addr, data);
     public void   WriteInt32Public(ulong addr, int value) => WriteInt32(addr, value);
     public bool   IsExecutableAddressPublic(ulong addr) => IsExecutableAddress(addr);
+
+    /// <summary>
+    /// Returns the captured season entity pointer, or null if not yet captured.
+    /// The hook fires when the game calls SeasonSettings::Loaded during initialization.
+    /// </summary>
+    public ulong? GetCapturedSeasonEntity()
+    {
+        if (_seasonEntityStorageAddr == 0) return null;
+        var ptr = ReadUInt64(_seasonEntityStorageAddr);
+        return ptr != 0 ? ptr : null;
+    }
     public bool   IsAddressHooked(ulong addr) => _hookedAddresses.Contains(addr);
 
     public void   LogPublic(string msg) => L(msg);
@@ -697,8 +713,93 @@ public sealed class RuntimeHookEngine : IDisposable
         _crcBypassActive = true;
         ApplyIntegrityBypasses(bytes);
         ApplyValueEncryptionBypass(bytes);
+        InstallSeasonHook(bytes);
         StartCrcTimer();
         L($"CRC bypass armed. ptr=0x{fnPtrAddr:X}, ret-stub=0x{retStubAddr:X} (dedicated cave)");
+    }
+
+    /// <summary>
+    /// Installs a code cave hook at the "SeasonSettings Loaded" string reference
+    /// inside FUN_7ff6a3e70460 to capture the this pointer (RDI = param_1).
+    /// The captured pointer is the season entity used by SeasonChanger.
+    /// </summary>
+    private void InstallSeasonHook(byte[] moduleBytes)
+    {
+        if (_seasonHookInstalled) return;
+
+        // 1. Find "SeasonSettings Loaded" string in the module
+        var needle = System.Text.Encoding.ASCII.GetBytes("SeasonSettings Loaded");
+        int stringOff = -1;
+        for (int i = 0; i < moduleBytes.Length - needle.Length; i++)
+        {
+            bool match = true;
+            for (int j = 0; j < needle.Length; j++)
+            {
+                if (moduleBytes[i + j] != needle[j]) { match = false; break; }
+            }
+            if (match) { stringOff = i; break; }
+        }
+        if (stringOff < 0) { L("Season: string not found"); return; }
+
+        // 2. Find LEA RDX,[rip+disp] pointing to this string (unique match)
+        // LEA RDX = 48 8D 15 XX XX XX XX
+        ulong hookRVA = 0;
+        for (uint i = 0x1000; i < moduleBytes.Length - 7; i++)
+        {
+            if (moduleBytes[i] == 0x48 && moduleBytes[i + 1] == 0x8D && moduleBytes[i + 2] == 0x15)
+            {
+                int disp = BitConverter.ToInt32(moduleBytes, (int)i + 3);
+                long target = (long)i + 7 + disp;
+                if (target == stringOff)
+                {
+                    hookRVA = i;
+                    break;
+                }
+            }
+        }
+        if (hookRVA == 0) { L("Season: LEA not found"); return; }
+
+        var hookAddr = _mainBase + hookRVA;
+        L($"Season: hook target at 0x{hookAddr:X}");
+
+        // 3. Allocate code cave (64 bytes: code + captured pointer storage)
+        const int caveSize = 64;
+        const int storageOffset = 0x30; // where captured entity pointer is stored
+        var caveAddr = AllocateNear(hookAddr, caveSize);
+        _seasonCaveAddr = caveAddr;
+        _seasonEntityStorageAddr = caveAddr + storageOffset;
+
+        // 4. Build code cave:
+        //    +0x00: MOV [rip+disp], RDI  (7 bytes) — save entity pointer
+        //    +0x07: LEA RDX,[rip+disp]   (7 bytes) — original LEA with recomputed disp
+        //    +0x0E: JMP back             (5 bytes)
+        //    +0x30: captured pointer      (8 bytes)
+        var cave = new byte[caveSize];
+
+        // MOV [rip+0x29], RDI → stores RDI to cave+0x07+0x29 = cave+0x30
+        cave[0] = 0x48; cave[1] = 0x89; cave[2] = 0x3D;
+        cave[3] = (byte)(storageOffset - 7); // disp = 0x30 - 0x07 = 0x29
+        cave[4] = 0x00; cave[5] = 0x00; cave[6] = 0x00;
+
+        // LEA RDX,[rip+newDisp] — recomputed displacement for the moved instruction
+        int origDisp = BitConverter.ToInt32(moduleBytes, (int)hookRVA + 3);
+        ulong stringTarget = hookAddr + 7 + (ulong)(long)origDisp;
+        long newDisp = (long)(stringTarget - (caveAddr + 14)); // rip after LEA = cave+7+7=14
+        cave[7] = 0x48; cave[8] = 0x8D; cave[9] = 0x15;
+        BitConverter.GetBytes((int)newDisp).CopyTo(cave, 10);
+
+        // JMP back to hookAddr + 7 (resume after the original LEA)
+        var jmpBack = BuildRelativeJump(caveAddr + 14, hookAddr + 7, 5);
+        Buffer.BlockCopy(jmpBack, 0, cave, 14, jmpBack.Length);
+
+        WriteBytes(caveAddr, cave);
+
+        // 5. Install hook: overwrite original LEA with JMP to cave
+        var hookPatch = BuildRelativeJump(hookAddr, caveAddr, 7);
+        WriteProtectedBytes(hookAddr, hookPatch);
+
+        _seasonHookInstalled = true;
+        L($"Season hook installed. cave=0x{caveAddr:X}, storage=0x{_seasonEntityStorageAddr:X}");
     }
 
     /// <summary>
