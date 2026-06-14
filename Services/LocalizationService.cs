@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -8,10 +9,11 @@ namespace FH6Mod.Services;
 
 /// <summary>
 /// Loads and serves localised strings from Localization/*.json.
-/// Fires <see cref="LanguageChanged"/> whenever the user switches language
-/// so that subscribers can refresh any cached/static text.
+/// Implements <see cref="INotifyPropertyChanged"/> so that XAML
+/// <c>{Binding Localization[Key]}</c> bindings can receive indexer-change
+/// notifications and re-evaluate when the active language switches.
 /// </summary>
-public sealed class LocalizationService
+public sealed class LocalizationService : INotifyPropertyChanged
 {
     private readonly Dictionary<string, Dictionary<string, string>> _all = new();
     private Dictionary<string, string> _current = new();
@@ -33,6 +35,12 @@ public sealed class LocalizationService
     /// Raised after the active language has changed. Argument is the new language code.
     /// </summary>
     public event Action<string>? LanguageChanged;
+
+    /// <summary>
+    /// Raised when the active language changes, so that <c>{Binding Localization[Key]}</c>
+    /// XAML bindings re-evaluate the indexer with the new language's strings.
+    /// </summary>
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>
     /// Scan the Localization/ directory, load every *.json, then switch to the
@@ -117,7 +125,13 @@ public sealed class LocalizationService
             AppSettings.Current.NotifyChanged();
         }
 
+        // Notify subscribers of the language change
         LanguageChanged?.Invoke(code);
+
+        // Notify XAML bindings that all indexer values on this service have changed.
+        // "Item[]" is the standard .NET convention for indexer change notification;
+        // Avalonia's binding engine uses it to re-evaluate {Binding Localization[Key]}.
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
     }
 
     // ----- helpers -----
